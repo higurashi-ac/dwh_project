@@ -2,6 +2,10 @@
 # load_source_system.sh
 # Loads all SQL files from ./datadumps into dev_dwh.public
 
+# hwo to 
+# chmod +x init_public_sourcesystem_oddo.sh
+# ./init_public_sourcesystem_oddo.sh
+
 DB_NAME="dev_dwh"
 DB_USER="postgres"
 SCHEMA="public"

@@ -1,3 +1,5 @@
+-- docker exec -i postgres psql -U postgres -d dev_dwh -v schema=public -f /docker-entrypoint-initdb.d/create.sql
+
 -- Sequences
 CREATE SEQUENCE IF NOT EXISTS res_partner_id_seq;
 CREATE SEQUENCE IF NOT EXISTS sale_order_id_seq;
