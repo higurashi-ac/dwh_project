@@ -1,0 +1,76 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./utils:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - local_net
+
+#  pgadmin:
+#    image: dpage/pgadmin4:latest
+#    container_name: pgadmin
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+#      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+#    ports:
+#      - "5050:80"
+#    volumes:
+#      - ./pgadmin_data:/var/lib/pgadmin
+#    depends_on:
+#      - postgres
+#    networks:
+#      - local_net
+
+#  metabase:
+#    image: metabase/metabase:v0.48.6
+#    container_name: metabase
+#    restart: always
+#    env_file: .env
+#    volumes:
+#      - ./metabase_data:/metabase-data    
+#    ports:
+#      - "3000:3000"
+#    networks:
+#      - local_net      
+#
+  airflow:
+    image: apache/airflow:2.7.1
+    container_name: airflow
+    restart: always
+    env_file: .env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    ports:
+      - "8080:8080"
+    networks:
+      - local_net
+    command: >
+      bash -c "airflow db init && airflow webserver & airflow scheduler"
+
+#  jupyter:
+#    image: jupyter/datascience-notebook:python-3.11.6
+#    container_name: jupyter
+#    restart: always
+#    volumes:
+#      - ./jupyter:/home/jovyan/work
+#      - ./dumps:/home/jovyan/dumps
+#    networks:
+#      - local_net      
+#    ports:
+#      - "8888:8888"
+
+volumes:
+  postgres_data:
+
+networks:
+  local_net:
+    driver: bridge

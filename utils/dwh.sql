@@ -1,0 +1,294 @@
+-- Create schema if not exists
+CREATE SCHEMA IF NOT EXISTS dwh;
+
+CREATE TABLE IF NOT EXISTS dwh.dim_partner (
+    partner_sk SERIAL PRIMARY KEY,
+    partner_id INT UNIQUE, -- business key from Odoo
+    partner_name TEXT,
+    partner_type TEXT, -- 'customer', 'supplier', 'both', or 'unknown'
+    street TEXT,
+    street2 TEXT,
+    street_name TEXT,
+    street_number TEXT,
+    street_number2 TEXT,
+    zip TEXT,
+    city TEXT,
+    email TEXT,
+    email_normalized TEXT,
+    phone TEXT,
+    mobile TEXT,
+    is_company BOOLEAN,
+    commercial_company_name TEXT,
+    create_date TIMESTAMP,
+    write_date TIMESTAMP,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_purchase_order (
+    purchase_order_sk SERIAL PRIMARY KEY,
+    purchase_order_id INT UNIQUE,  -- BK from Odoo
+    name TEXT,
+    partner_ref TEXT,
+    date_order TIMESTAMP,
+    date_approve TIMESTAMP,
+    partner_id INT,
+    state TEXT,
+    notes TEXT,
+    invoice_count INT,
+    invoice_status TEXT,
+    date_planned TIMESTAMP,
+    amount_untaxed NUMERIC,
+    amount_tax NUMERIC,
+    amount_total NUMERIC,
+    user_id INT,
+    create_date TIMESTAMP,
+    write_date TIMESTAMP,
+    note TEXT,
+    adresse TEXT,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_purchase_order_line (
+    purchase_order_line_sk SERIAL PRIMARY KEY,
+    purchase_order_line_id INT UNIQUE,  -- BK Odoo
+    purchase_order_id INT,              -- links to dim_purchase_order
+    state TEXT,
+    name TEXT,
+    sequence INT,
+    product_qty NUMERIC,
+    date_planned TIMESTAMP,
+    product_uom TEXT,
+    product_id INT,
+    price_unit NUMERIC,
+    price_subtotal NUMERIC,
+    price_total NUMERIC,
+    price_tax NUMERIC,
+    net_price_pur NUMERIC,
+    create_date TIMESTAMP,
+    write_date TIMESTAMP,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_sale_order (
+    sale_order_sk SERIAL PRIMARY KEY,
+    sale_order_id INT UNIQUE,   -- BK Odoo ID
+    name TEXT,
+    state TEXT,
+    date_order TIMESTAMP,
+    create_date TIMESTAMP,
+    user_id INT,                -- link to dim_employee
+    partner_id INT,             -- link to dim_partner (customer)
+    pricelist_id INT,
+    invoice_status TEXT,
+    note TEXT,
+    amount_untaxed NUMERIC,
+    amount_tax NUMERIC,
+    amount_total NUMERIC,
+    company_id INT,
+    fiscal_position_id INT,
+    team_id INT,
+    signed_by TEXT,
+    signed_on TIMESTAMP,
+    project_title TEXT,
+    planning_id INT,            -- potential link to planning_slot
+    state_devis TEXT,
+    zip_client TEXT,
+    ville_client TEXT,
+    region_client TEXT,
+    ref_intervention TEXT,
+    source TEXT,
+    relance TEXT,
+    note_relance TEXT,
+    date_relance TIMESTAMP,
+    atelier_id INT,
+    responsable_intervention TEXT,
+    status_pose TEXT,
+    remarque TEXT,
+    decharge TEXT,
+    invoice_id INT,
+    discount_type TEXT,
+    discount_rate NUMERIC,
+    amount_discount NUMERIC,
+    warehouse_id INT,
+    procurement_group_id INT,
+    effective_date TIMESTAMP,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_sale_order_line (
+    sale_order_line_sk SERIAL PRIMARY KEY,
+    sale_order_line_id INT UNIQUE,   -- Odoo ID BK
+    sale_order_id INT,               -- link to dim_sale_order
+    name TEXT,
+    sequence INT,
+    invoice_status TEXT,
+    price_unit NUMERIC,
+    price_subtotal NUMERIC,
+    price_tax NUMERIC,
+    price_total NUMERIC,
+    price_reduce NUMERIC,
+    price_reduce_taxinc NUMERIC,
+    price_reduce_taxexcl NUMERIC,
+    discount NUMERIC,
+    product_id INT,                  -- link to dim_product
+    product_uom_qty NUMERIC,
+    product_uom TEXT,
+    qty_delivered_method TEXT,
+    qty_delivered NUMERIC,
+    qty_delivered_manual NUMERIC,
+    qty_to_invoice NUMERIC,
+    qty_invoiced NUMERIC,
+    untaxed_amount_invoiced NUMERIC,
+    untaxed_amount_to_invoice NUMERIC,
+    salesman_id INT,                 -- link to dim_employee
+    company_id INT,
+    order_partner_id INT,            -- link to dim_partner
+    state TEXT,
+    width NUMERIC,
+    height NUMERIC,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_planning_slot (
+    planning_slot_sk SERIAL PRIMARY KEY,
+    planning_slot_id INT UNIQUE,   -- Odoo ID
+    name_seq TEXT,
+    type_intervention TEXT,
+    my_image TEXT,                 -- to think about this later
+    rapport TEXT,
+    remarque TEXT,
+    employee_id INT,               -- link to dim_employee
+    user_id INT,                   -- link to user dimension (am still thinking about whether integrate this or not)
+    partner_id INT,                -- link to dim_partner
+    company_id INT,
+    start_datetime TIMESTAMP,
+    end_datetime TIMESTAMP,
+    allocated_hours NUMERIC,
+    create_date TIMESTAMP,
+    write_date TIMESTAMP,
+    state TEXT,
+    motif TEXT,
+    parent_id INT,                 -- potential self-reference
+    ville_client TEXT,
+    region_client TEXT,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_payment_justify (
+    payment_justify_sk SERIAL PRIMARY KEY,
+    payment_justify_id INT UNIQUE,   -- BK
+    name TEXT,
+    mode_paiement TEXT,
+    montant NUMERIC,
+    date TIMESTAMP,
+    client INT,                      -- link to dim_partner
+    source TEXT,
+    total NUMERIC,
+    create_date TIMESTAMP,
+    write_date TIMESTAMP,
+    etat TEXT,
+    moyen_paiement TEXT,
+    attachment TEXT,
+    user_id INT,                      -- link to dim_employee/user
+    memo TEXT,
+    date_paiement TIMESTAMP,
+    planning INT,                     -- link to dim_planning_slot
+    type_paiement TEXT,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_employee (
+    employee_sk SERIAL PRIMARY KEY,
+    employee_id INT UNIQUE,      
+    name TEXT,
+    user_id INT,
+    active BOOLEAN,
+    job_title TEXT,
+    company_id INT,
+    address_id INT,
+    work_phone TEXT,
+    mobile_phone TEXT,
+    work_email TEXT,
+    work_location TEXT,
+    resource_id INT,
+    resource_calendar_id INT,
+    create_date TIMESTAMP,
+    write_date TIMESTAMP,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_account_move (
+    account_move_sk SERIAL PRIMARY KEY,
+    account_move_id INT UNIQUE,     -- Odoo ID
+    name TEXT,
+    date TIMESTAMP,
+    ref TEXT,                       -- important for linking with planning (name_seq)
+    narration TEXT,
+    state TEXT,
+    type TEXT,
+    to_check BOOLEAN,
+    journal_id INT,                 -- link to dim_account_journal
+    company_id INT,
+    partner_id INT,                 -- link to dim_partner
+    amount_untaxed NUMERIC,
+    amount_tax NUMERIC,
+    amount_total NUMERIC,
+    amount_residual NUMERIC,
+    amount_untaxed_signed NUMERIC,
+    amount_tax_signed NUMERIC,
+    amount_total_signed NUMERIC,
+    amount_residual_signed NUMERIC,
+    fiscal_position_id INT,
+    invoice_user_id INT,            -- link to dim_employee
+    invoice_payment_state TEXT,
+    invoice_date TIMESTAMP,
+    invoice_date_due TIMESTAMP,
+    invoice_payment_ref TEXT,
+    invoice_sent BOOLEAN,
+    invoice_origin TEXT,
+    invoice_partner_display_name TEXT,
+    create_date TIMESTAMP,
+    partner_shipping_id INT,        -- link to dim_partner
+    project_title TEXT,
+    ville_client TEXT,
+    region_client TEXT,
+    invoice_origin_id INT,
+    relance_tel TEXT,
+    date_relance_tel TIMESTAMP,
+    note_relance TEXT,
+    pose_fini BOOLEAN,
+    discount_rate NUMERIC,
+    amount_discount NUMERIC,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS dwh.dim_account_journal (
+    account_journal_sk SERIAL PRIMARY KEY,
+    account_journal_id INT UNIQUE,
+    name TEXT,
+    code TEXT,
+    active BOOLEAN,
+    type TEXT,
+    default_credit_account_id INT,
+    default_debit_account_id INT,
+    restrict_mode_hash_table BOOLEAN,
+    sequence_id INT,
+    refund_sequence_id INT,
+    sequence INT,
+    company_id INT,
+    refund_sequence BOOLEAN,
+    create_date TIMESTAMP,
+    write_date TIMESTAMP,
+    check_sequence_id INT,
+    stg_loaded_at TIMESTAMP,
+    stg_batch_id VARCHAR
+);
