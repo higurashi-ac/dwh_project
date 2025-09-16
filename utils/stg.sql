@@ -1,3 +1,6 @@
+-- TO RUN IN TERMINAL
+-- docker exec -i postgres psql -U postgres -d dev_dwh -v schema=stg -f /docker-entrypoint-initdb.d/utils/stg.sql
+
 -- Create schema if it does not exist
 CREATE SCHEMA IF NOT EXISTS stg;
 

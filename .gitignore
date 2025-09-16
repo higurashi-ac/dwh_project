@@ -1,0 +1,28 @@
+# Python / Airflow
+__pycache__/
+*.pyc
+*.pyo
+
+# VS Code
+.vscode/
+./vscode
+
+# Docker volumes (Postgres data)
+#postgres_data/
+#pgdata/
+
+# Logs
+logs/
+airflow/logs/
+*.log
+
+# Env files
+.env
+#.env.local
+
+# Temporary files
+*.tmp
+*.swp
+
+
+artisan2go.session.sql

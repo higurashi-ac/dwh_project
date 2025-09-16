@@ -7,11 +7,60 @@ services:
     env_file: .env
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-      - ./utils:/docker-entrypoint-initdb.d
+      - ./utils:/docker-entrypoint-initdb.d/utils
+      - ./data_dumps:/docker-entrypoint-initdb.d/data_dumps
     ports:
       - "5432:5432"
     networks:
       - local_net
+      
+  airflow-webserver:
+    image: apache/airflow:2.7.1
+    container_name: airflow-webserver
+    restart: unless-stopped
+    env_file: .env
+    command: webserver
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/bootstrap:/opt/airflow/bootstrap
+    networks:
+      - local_net
+    depends_on:
+      - postgres
+      - airflow-init
+
+  airflow-scheduler:
+    image: apache/airflow:2.7.1
+    container_name: airflow-scheduler
+    restart: unless-stopped
+    env_file: .env
+    command: scheduler
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    networks:
+      - local_net
+    depends_on:
+      - postgres
+      - airflow-init
+
+  airflow-init:
+    image: apache/airflow:2.7.1
+    container_name: airflow-init
+    env_file: .env
+    entrypoint: /opt/airflow/bootstrap/init_connections.sh
+    volumes:
+    - ./airflow/bootstrap:/opt/airflow/bootstrap
+    networks:
+    - local_net
+    depends_on:
+    - postgres
+
 
 #  pgadmin:
 #    image: dpage/pgadmin4:latest
@@ -40,21 +89,6 @@ services:
 #    networks:
 #      - local_net      
 #
-  airflow:
-    image: apache/airflow:2.7.1
-    container_name: airflow
-    restart: always
-    env_file: .env
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-    ports:
-      - "8080:8080"
-    networks:
-      - local_net
-    command: >
-      bash -c "airflow db init && airflow webserver & airflow scheduler"
 
 #  jupyter:
 #    image: jupyter/datascience-notebook:python-3.11.6
