@@ -13,6 +13,20 @@ services:
       - "5432:5432"
     networks:
       - local_net
+  
+  airflow-init:
+    image: apache/airflow:2.7.1
+    container_name: airflow-init
+    env_file: .env
+    entrypoint: /opt/airflow/bootstrap/init_connections.sh
+    volumes:
+    - ./airflow/bootstrap:/opt/airflow/bootstrap
+    - ./create_airflow_user.sh:/create_airflow_user.sh
+    networks:
+    - local_net
+    depends_on:
+    - postgres
+    
       
   airflow-webserver:
     image: apache/airflow:2.7.1
@@ -27,6 +41,9 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/bootstrap:/opt/airflow/bootstrap
+      
+    #command: bash -c "/create_airflow_user.sh && airflow webserver"
+
     networks:
       - local_net
     depends_on:
@@ -48,19 +65,6 @@ services:
     depends_on:
       - postgres
       - airflow-init
-
-  airflow-init:
-    image: apache/airflow:2.7.1
-    container_name: airflow-init
-    env_file: .env
-    entrypoint: /opt/airflow/bootstrap/init_connections.sh
-    volumes:
-    - ./airflow/bootstrap:/opt/airflow/bootstrap
-    networks:
-    - local_net
-    depends_on:
-    - postgres
-
 
 #  pgadmin:
 #    image: dpage/pgadmin4:latest

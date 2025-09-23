@@ -45,7 +45,7 @@ with DAG(
 
     load_dim = PostgresOperator(
         task_id='load_dim_${dim}',
-        postgres_conn_id='postgres_default',
+        postgres_conn_id='postgres_public',
         sql='sql/load_dim_${dim}.sql',
     )
 EOF

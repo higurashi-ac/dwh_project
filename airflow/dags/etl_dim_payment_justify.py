@@ -27,12 +27,12 @@ with DAG(
     if load_mode.upper() == "FULL":
         full_load = PostgresOperator(
             task_id='full_load_dim_payment_justify',
-            postgres_conn_id='postgres_default',
+            postgres_conn_id='postgres_public',
             sql='sql/load_dim_payment_justify.sql',
         )
     else:
         incremental_upsert = PostgresOperator(
             task_id='incremental_upsert_dim_payment_justify',
-            postgres_conn_id='postgres_default',
+            postgres_conn_id='postgres_public',
             sql='sql/load_dim_payment_justify.sql',
         )

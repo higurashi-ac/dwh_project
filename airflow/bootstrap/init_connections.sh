@@ -15,13 +15,14 @@ airflow connections add postgres_public \
 
 airflow connections add postgres_odoo \
     --conn-type postgres \
-    --conn-host odoo_host \
-    --conn-schema odoo_db \
-    --conn-login odoo_user \
-    --conn-password odoo_pass \
-    --conn-port 5432
+    --conn-host 149.202.71.17 \
+    --conn-schema public \
+    --conn-login odoo \
+    --conn-password odoo \
+    --conn-port 26022
 
 echo "Setting Airflow variables..."
-airflow variables set stg_source_system public
+airflow variables set stg_source_system odoo
 
 echo "Initialization done."
+
