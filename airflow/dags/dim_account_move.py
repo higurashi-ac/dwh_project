@@ -14,11 +14,11 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-load_mode = Variable.get("load_mode_dim_employee", default_var="INCREMENTAL")
+load_mode = Variable.get("load_mode_dim_account_move", default_var="INCREMENTAL")
 
-def build_dim_employee_sql():
+def build_dim_account_move_sql():
     """
-    Build SQL dynamically for dim_employee:
+    Build SQL dynamically for dim_account_move:
     - CREATE TABLE with fixed + dynamic columns
     - UPSERT from staging
     - Auditing fields added
@@ -30,28 +30,28 @@ def build_dim_employee_sql():
         SELECT column_name, data_type
         FROM information_schema.columns
         WHERE table_schema = 'stg'
-          AND table_name = 'hr_employee'
+          AND table_name = 'account_move'
         ORDER BY ordinal_position;
     """)
 
     if not cols_info:
-        raise ValueError("No columns found in stg.hr_employee")
+        raise ValueError("No columns found in stg.account_move")
 
     # Fixed part of dimension
     fixed_columns = [
-        '"employee_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
-        '"employee_id" INT UNIQUE'
+        '"account_move_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
+        '"account_move_id" INT UNIQUE'
     ]
 
     # Dynamic part, insert/upsert lists
     dynamic_columns = []
-    insert_cols = ['employee_id']
-    insert_select = ['id AS employee_id']
+    insert_cols = ['account_move_id']
+    insert_select = ['id AS account_move_id']
     update_set = []
 
     for col_name, data_type in cols_info:
         if col_name == "id":
-            continue  # already mapped to employee_id
+            continue  # already mapped to account_move_id
 
         # Normalize Postgres types to dimension-friendly types
         if data_type == "character varying":
@@ -88,32 +88,32 @@ def build_dim_employee_sql():
     create_sql = f"""
     CREATE SCHEMA IF NOT EXISTS dwh;
 
-    CREATE TABLE IF NOT EXISTS dwh.dim_employee (
+    CREATE TABLE IF NOT EXISTS dwh.dim_account_move (
         {', '.join(fixed_columns + dynamic_columns)}
     );
     """
 
     # Build UPSERT statement
     upsert_sql = f"""
-    INSERT INTO dwh.dim_employee (
+    INSERT INTO dwh.dim_account_move (
         {', '.join(insert_cols)}
     )
     SELECT
         {', '.join(insert_select)}
-    FROM stg.hr_employee s
-    ON CONFLICT (employee_id) DO UPDATE
+    FROM stg.account_move s
+    ON CONFLICT (account_move_id) DO UPDATE
     SET {', '.join(update_set)};
     """
 
     full_sql = create_sql + "\n" + upsert_sql
-    logging.info(f"Generated SQL for dim_employee:\n{full_sql}")
+    logging.info(f"Generated SQL for dim_account_move:\n{full_sql}")
     return full_sql
 
 
 with DAG(
-    'dim_employee',
+    'dim_account_move',
     default_args=default_args,
-    description='ETL DAG for dim_employee (auto schema + upsert)',
+    description='ETL DAG for dim_account_move (auto schema + upsert)',
     schedule_interval='*/10 * * * *',
     start_date=datetime(2025, 9, 16),
     catchup=False,
@@ -123,19 +123,19 @@ with DAG(
     # Optionally truncate first if FULL load
     if load_mode.upper() == "FULL":
         truncate_task = PostgresOperator(
-            task_id='truncate_dim_employee',
+            task_id='truncate_dim_account_move',
             postgres_conn_id='postgres_public',
-            sql='TRUNCATE TABLE dwh.dim_employee;'
+            sql='TRUNCATE TABLE dwh.dim_account_move;'
         )
         load_task = PostgresOperator(
-            task_id='load_dim_employee_full',
+            task_id='load_dim_account_move_full',
             postgres_conn_id='postgres_public',
-            sql=build_dim_employee_sql()
+            sql=build_dim_account_move_sql()
         )
         truncate_task >> load_task
     else:
         load_task = PostgresOperator(
-            task_id='load_dim_employee_incremental',
+            task_id='load_dim_account_move_incremental',
             postgres_conn_id='postgres_public',
-            sql=build_dim_employee_sql()
+            sql=build_dim_account_move_sql()
         )

@@ -27,8 +27,8 @@ def ensure_staging_tables(source_conn_id, target_conn_id, tables):
     target_hook = PostgresHook(postgres_conn_id=target_conn_id)
 
     # Ensure staging schema exists
-    target_hook.run("CREATE SCHEMA IF NOT EXISTS stg2;")
-    logging.info("✅ Ensured stg2 schema exists")
+    target_hook.run("CREATE SCHEMA IF NOT EXISTS stg;")
+    logging.info("✅ Ensured stg schema exists")
     target_hook.run("CREATE SCHEMA IF NOT EXISTS dwh;")
     logging.info("✅ Ensured dwh schema exists")
 
@@ -52,9 +52,9 @@ def ensure_staging_tables(source_conn_id, target_conn_id, tables):
             continue
 
         columns_sql = ", ".join([f'"{col}" {dtype}' for col, dtype in cols_info])
-        create_sql = f"CREATE TABLE IF NOT EXISTS stg2.{table_name} ({columns_sql});"
+        create_sql = f"CREATE TABLE IF NOT EXISTS stg.{table_name} ({columns_sql});"
         target_hook.run(create_sql)
-        logging.info(f"✅ Ensured stg2.{table_name} exists with columns: {columns_sql}")
+        logging.info(f"✅ Ensured stg.{table_name} exists with columns: {columns_sql}")
 
 # from chat to resolve error of  :sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) invalid dsn: invalid connection option "__extra__"
 # --- Helper to get clean SQLAlchemy engine ---
@@ -95,7 +95,7 @@ def load_stg(**context):
         # --- Determine last load timestamp in staging ---
         last_ts = None
         if inc_col:
-            last_ts_result = target_hook.get_first(f"SELECT MAX({inc_col}) FROM stg2.{table_name}")
+            last_ts_result = target_hook.get_first(f"SELECT MAX({inc_col}) FROM stg.{table_name}")
             if last_ts_result:
                 last_ts = last_ts_result[0]
 
@@ -114,11 +114,11 @@ def load_stg(**context):
             continue
 
         # --- Insert data using Pandas ---
-        df.to_sql(table_name, target_engine, schema="stg2", if_exists="append", index=False)
+        df.to_sql(table_name, target_engine, schema="stg", if_exists="append", index=False)
 
         # --- Report rows in staging ---
-        rows = target_hook.get_first(f"SELECT COUNT(*) FROM stg2.{table_name}")[0]
-        logging.info(f"{table_name}: {rows} rows now in stg2")
+        rows = target_hook.get_first(f"SELECT COUNT(*) FROM stg.{table_name}")[0]
+        logging.info(f"{table_name}: {rows} rows now in stg")
 
 # --- DAG definition ---
 with DAG(
@@ -127,7 +127,7 @@ with DAG(
     start_date=datetime(2025, 9, 16),
     catchup=False,
     max_active_runs=1,
-    tags=["stg2", "dynamic", "pandas"],
+    tags=["stg", "dynamic", "pandas"],
 ) as dag:
 
     # Step 1: Ensure staging tables exist

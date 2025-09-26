@@ -14,11 +14,11 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-load_mode = Variable.get("load_mode_dim_employee", default_var="INCREMENTAL")
+load_mode = Variable.get("load_mode_dim_payment_justify", default_var="INCREMENTAL")
 
-def build_dim_employee_sql():
+def build_dim_payment_justify_sql():
     """
-    Build SQL dynamically for dim_employee:
+    Build SQL dynamically for dim_payment_justify:
     - CREATE TABLE with fixed + dynamic columns
     - UPSERT from staging
     - Auditing fields added
@@ -30,28 +30,28 @@ def build_dim_employee_sql():
         SELECT column_name, data_type
         FROM information_schema.columns
         WHERE table_schema = 'stg'
-          AND table_name = 'hr_employee'
+          AND table_name = 'payment_justify'
         ORDER BY ordinal_position;
     """)
 
     if not cols_info:
-        raise ValueError("No columns found in stg.hr_employee")
+        raise ValueError("No columns found in stg.payment_justify")
 
     # Fixed part of dimension
     fixed_columns = [
-        '"employee_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
-        '"employee_id" INT UNIQUE'
+        '"payment_justify_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
+        '"payment_justify_id" INT UNIQUE'
     ]
 
     # Dynamic part, insert/upsert lists
     dynamic_columns = []
-    insert_cols = ['employee_id']
-    insert_select = ['id AS employee_id']
+    insert_cols = ['payment_justify_id']
+    insert_select = ['id AS payment_justify_id']
     update_set = []
 
     for col_name, data_type in cols_info:
         if col_name == "id":
-            continue  # already mapped to employee_id
+            continue  # already mapped to payment_justify_id
 
         # Normalize Postgres types to dimension-friendly types
         if data_type == "character varying":
@@ -88,32 +88,32 @@ def build_dim_employee_sql():
     create_sql = f"""
     CREATE SCHEMA IF NOT EXISTS dwh;
 
-    CREATE TABLE IF NOT EXISTS dwh.dim_employee (
+    CREATE TABLE IF NOT EXISTS dwh.dim_payment_justify (
         {', '.join(fixed_columns + dynamic_columns)}
     );
     """
 
     # Build UPSERT statement
     upsert_sql = f"""
-    INSERT INTO dwh.dim_employee (
+    INSERT INTO dwh.dim_payment_justify (
         {', '.join(insert_cols)}
     )
     SELECT
         {', '.join(insert_select)}
-    FROM stg.hr_employee s
-    ON CONFLICT (employee_id) DO UPDATE
+    FROM stg.payment_justify s
+    ON CONFLICT (payment_justify_id) DO UPDATE
     SET {', '.join(update_set)};
     """
 
     full_sql = create_sql + "\n" + upsert_sql
-    logging.info(f"Generated SQL for dim_employee:\n{full_sql}")
+    logging.info(f"Generated SQL for dim_payment_justify:\n{full_sql}")
     return full_sql
 
 
 with DAG(
-    'dim_employee',
+    'dim_payment_justify',
     default_args=default_args,
-    description='ETL DAG for dim_employee (auto schema + upsert)',
+    description='ETL DAG for dim_payment_justify (auto schema + upsert)',
     schedule_interval='*/10 * * * *',
     start_date=datetime(2025, 9, 16),
     catchup=False,
@@ -123,19 +123,19 @@ with DAG(
     # Optionally truncate first if FULL load
     if load_mode.upper() == "FULL":
         truncate_task = PostgresOperator(
-            task_id='truncate_dim_employee',
+            task_id='truncate_dim_payment_justify',
             postgres_conn_id='postgres_public',
-            sql='TRUNCATE TABLE dwh.dim_employee;'
+            sql='TRUNCATE TABLE dwh.dim_payment_justify;'
         )
         load_task = PostgresOperator(
-            task_id='load_dim_employee_full',
+            task_id='load_dim_payment_justify_full',
             postgres_conn_id='postgres_public',
-            sql=build_dim_employee_sql()
+            sql=build_dim_payment_justify_sql()
         )
         truncate_task >> load_task
     else:
         load_task = PostgresOperator(
-            task_id='load_dim_employee_incremental',
+            task_id='load_dim_payment_justify_incremental',
             postgres_conn_id='postgres_public',
-            sql=build_dim_employee_sql()
+            sql=build_dim_payment_justify_sql()
         )

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS dwh.dim_employee (
     resource_calendar_id INT,
     create_date TIMESTAMP,
     write_date TIMESTAMP,
+    
     stg_loaded_at TIMESTAMP,
     stg_batch_id VARCHAR
 );
