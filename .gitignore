@@ -12,6 +12,7 @@ postgres_data/
 # Logs
 logs/
 airflow/logs/*
+airflow/bootstrap/
 *.log
 
 # Env files
