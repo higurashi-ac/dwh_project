@@ -40,13 +40,13 @@ def build_dim_sale_order_sql():
     # Fixed part of dimension
     fixed_columns = [
         '"sale_order_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
-        '"sale_order_id" INT UNIQUE'
+        '"id" INT UNIQUE'
     ]
 
     # Dynamic part, insert/upsert lists
     dynamic_columns = []
-    insert_cols = ['sale_order_id']
-    insert_select = ['id AS sale_order_id']
+    insert_cols = ['id']
+    insert_select = ['id ']
     update_set = []
 
     for col_name, data_type in cols_info:
@@ -81,7 +81,7 @@ def build_dim_sale_order_sql():
     ]
     dynamic_columns += audit_columns
     insert_cols += ['etl_loaded_at', 'etl_batch_id']
-    insert_select += ['now()', 'gen_random_uuid()']  # example batch id
+    insert_select += ['now() AS etl_loaded_at', 'gen_random_uuid() AS etl_batch_id'] # example batch id
     update_set += ['etl_loaded_at = EXCLUDED.etl_loaded_at', 'etl_batch_id = EXCLUDED.etl_batch_id']
 
     # Build CREATE TABLE
@@ -98,11 +98,18 @@ def build_dim_sale_order_sql():
     INSERT INTO dwh.dim_sale_order (
         {', '.join(insert_cols)}
     )
-    SELECT
+    with base as 
+    (SELECT
         {', '.join(insert_select)}
-    FROM stg.sale_order s
-    ON CONFLICT (sale_order_id) DO UPDATE
-    SET {', '.join(update_set)};
+        ,row_number() over(partition by id order by write_date desc) as rn 
+    FROM stg.sale_order s)
+    ,final as (select {', '.join(insert_cols)} from base where rn =1) 
+        
+    select * from final 
+    ON CONFLICT (id) DO UPDATE
+    SET {', '.join(update_set)}
+   
+    ;
     """
 
     full_sql = create_sql + "\n" + upsert_sql

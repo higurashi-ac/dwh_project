@@ -40,13 +40,13 @@ def build_dim_purchase_order_sql():
     # Fixed part of dimension
     fixed_columns = [
         '"purchase_order_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
-        '"purchase_order_id" INT UNIQUE'
+        '"id" INT UNIQUE'
     ]
 
     # Dynamic part, insert/upsert lists
     dynamic_columns = []
-    insert_cols = ['purchase_order_id']
-    insert_select = ['id AS purchase_order_id']
+    insert_cols = ['id']
+    insert_select = ['id']
     update_set = []
 
     for col_name, data_type in cols_info:
@@ -68,11 +68,14 @@ def build_dim_purchase_order_sql():
             dtype = "DATE"
         else:
             dtype = data_type.upper()
+        
+        #sensitive case "majus"
+        safe_col = f'"{col_name}"'
 
-        dynamic_columns.append(f'"{col_name}" {dtype}')
-        insert_cols.append(col_name)
-        insert_select.append(col_name)
-        update_set.append(f'{col_name} = EXCLUDED.{col_name}')
+        dynamic_columns.append(f'{safe_col} {dtype}')
+        insert_cols.append(safe_col)
+        insert_select.append(f's.{safe_col}')  # référence explicite au staging
+        update_set.append(f'{safe_col} = EXCLUDED.{safe_col}')
 
     # Add auditing columns
     audit_columns = [
@@ -81,7 +84,7 @@ def build_dim_purchase_order_sql():
     ]
     dynamic_columns += audit_columns
     insert_cols += ['etl_loaded_at', 'etl_batch_id']
-    insert_select += ['now()', 'gen_random_uuid()']  # example batch id
+    insert_select += ['now() AS etl_loaded_at', 'gen_random_uuid() AS etl_batch_id']  # example batch id
     update_set += ['etl_loaded_at = EXCLUDED.etl_loaded_at', 'etl_batch_id = EXCLUDED.etl_batch_id']
 
     # Build CREATE TABLE
@@ -98,11 +101,18 @@ def build_dim_purchase_order_sql():
     INSERT INTO dwh.dim_purchase_order (
         {', '.join(insert_cols)}
     )
-    SELECT
+    with base as 
+    (SELECT
         {', '.join(insert_select)}
-    FROM stg.purchase_order s
-    ON CONFLICT (purchase_order_id) DO UPDATE
-    SET {', '.join(update_set)};
+        ,row_number() over(partition by id order by write_date desc) as rn 
+    FROM stg.purchase_order s)
+    ,final as (select {', '.join(insert_cols)} from base where rn =1) 
+        
+    select * from final 
+    ON CONFLICT (id) DO UPDATE
+    SET {', '.join(update_set)}
+   
+    ;
     """
 
     full_sql = create_sql + "\n" + upsert_sql

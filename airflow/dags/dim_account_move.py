@@ -40,13 +40,13 @@ def build_dim_account_move_sql():
     # Fixed part of dimension
     fixed_columns = [
         '"account_move_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
-        '"account_move_id" INT UNIQUE'
+        '"id" INT UNIQUE'
     ]
 
     # Dynamic part, insert/upsert lists
     dynamic_columns = []
-    insert_cols = ['account_move_id']
-    insert_select = ['id AS account_move_id']
+    insert_cols = ['id']
+    insert_select = ['id']
     update_set = []
 
     for col_name, data_type in cols_info:
@@ -81,7 +81,7 @@ def build_dim_account_move_sql():
     ]
     dynamic_columns += audit_columns
     insert_cols += ['etl_loaded_at', 'etl_batch_id']
-    insert_select += ['now()', 'gen_random_uuid()']  # example batch id
+    insert_select += ['now() AS etl_loaded_at', 'gen_random_uuid() AS etl_batch_id']  # example batch id
     update_set += ['etl_loaded_at = EXCLUDED.etl_loaded_at', 'etl_batch_id = EXCLUDED.etl_batch_id']
 
     # Build CREATE TABLE
@@ -98,11 +98,18 @@ def build_dim_account_move_sql():
     INSERT INTO dwh.dim_account_move (
         {', '.join(insert_cols)}
     )
-    SELECT
+    with base as 
+    (SELECT
         {', '.join(insert_select)}
-    FROM stg.account_move s
-    ON CONFLICT (account_move_id) DO UPDATE
-    SET {', '.join(update_set)};
+        ,row_number() over(partition by id order by write_date desc) as rn 
+    FROM stg.account_move s)
+    ,final as (select {', '.join(insert_cols)} from base where rn =1) 
+        
+    select * from final 
+    ON CONFLICT (id) DO UPDATE
+    SET {', '.join(update_set)}
+   
+    ;
     """
 
     full_sql = create_sql + "\n" + upsert_sql
