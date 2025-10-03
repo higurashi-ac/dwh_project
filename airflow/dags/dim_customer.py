@@ -48,7 +48,7 @@ def build_dim_customer_sql():
     update_set = []
 
     for col_name, data_type in cols_info:
-        if col_name in ("customer_sk", "id"):
+        if col_name in ("customer_sk", "id","etl_loaded_at", "etl_batch_id"):
             continue
 
         if data_type == "character varying":
@@ -77,7 +77,7 @@ def build_dim_customer_sql():
     ]
     dynamic_columns += audit_columns
     insert_cols += ['etl_loaded_at', 'etl_batch_id']
-    insert_select += ['now()', 'gen_random_uuid()']
+    insert_select += ['now() AS etl_loaded_at', 'gen_random_uuid() AS etl_batch_id']
     update_set += ['etl_loaded_at = EXCLUDED.etl_loaded_at', 'etl_batch_id = EXCLUDED.etl_batch_id']
 
     create_sql = f"""
@@ -95,8 +95,11 @@ def build_dim_customer_sql():
     WITH base AS (
         SELECT DISTINCT {', '.join(insert_select)}
         FROM dwh.dim_partner p
-        JOIN dwh.dim_sales_order s
-          ON p.id = s.partner_id
+        WHERE EXISTS (
+            SELECT 1
+            FROM dwh.dim_sale_order s
+            WHERE s.partner_id = p.id
+        )
     )
     SELECT * FROM base
     ON CONFLICT (id) DO UPDATE
