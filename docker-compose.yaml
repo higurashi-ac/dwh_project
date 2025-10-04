@@ -36,11 +36,14 @@ services:
     command: webserver
     ports:
       - "8080:8080"
+    environment:
+      - _PIP_ADDITIONAL_REQUIREMENTS=-r /opt/airflow/requirements.txt
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/bootstrap:/opt/airflow/bootstrap
+      - ./requirements.txt:/opt/airflow/requirements.txt
       
     #command: bash -c "/create_airflow_user.sh && airflow webserver"
 
