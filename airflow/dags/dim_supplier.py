@@ -25,20 +25,20 @@ def build_dim_supplier_sql():
     """
     pg_hook = PostgresHook(postgres_conn_id="postgres_public")
 
-    # Get columns from dim_partner
+    # Get columns from res_partner
     cols_info = pg_hook.get_records("""
         SELECT column_name, data_type
         FROM information_schema.columns
-        WHERE table_schema = 'dwh'
-          AND table_name = 'dim_partner'
+        WHERE table_schema = 'stg'
+          AND table_name = 'res_partner'
         ORDER BY ordinal_position;
     """)
 
     if not cols_info:
-        raise ValueError("No columns found in dwh.dim_partner")
+        raise ValueError("No columns found in stg.res_partner")
 
     fixed_columns = [
-        '"customer_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
+        '"supplier_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
         '"id" INT UNIQUE'
     ]
 
@@ -48,7 +48,7 @@ def build_dim_supplier_sql():
     update_set = []
 
     for col_name, data_type in cols_info:
-        if col_name in ("customer_sk", "id","etl_loaded_at", "etl_batch_id"):
+        if col_name in ("id"):
             continue
 
         if data_type == "character varying":

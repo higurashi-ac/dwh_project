@@ -19,7 +19,7 @@ def generate_french_holidays():
     conn = pg_hook.get_conn()
     cursor = conn.cursor()
     current_year = datetime.now().year
-    fr_holidays = holidays.France(years=range(current_year - 5, current_year + 6))
+    fr_holidays = holidays.France(years=range(current_year - 5, current_year + 10))
     for date, name in fr_holidays.items():
         cursor.execute(
             """
@@ -40,7 +40,7 @@ CREATE SCHEMA IF NOT EXISTS dwh;
 CREATE TABLE IF NOT EXISTS dwh.dim_date AS
 WITH dates AS (
     SELECT d::date AS full_date
-    FROM generate_series('2010-01-01'::date, '2050-12-31'::date, interval '1 day') d
+    FROM generate_series('2000-01-01'::date, '2050-12-31'::date, interval '1 day') d
 ),
 holidays AS (
     SELECT holiday_date, holiday_name

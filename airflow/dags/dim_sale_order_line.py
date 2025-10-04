@@ -121,7 +121,7 @@ with DAG(
     'dim_sale_order_line',
     default_args=default_args,
     description='ETL DAG for dim_sale_order_line (auto schema + upsert)',
-    schedule_interval='*/10 * * * *',
+    schedule_interval=None,
     start_date=datetime(2025, 9, 16),
     catchup=False,
     tags=['dwh', 'dimension'],

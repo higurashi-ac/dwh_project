@@ -122,8 +122,8 @@ def load_stg(**context):
 
 # --- DAG definition ---
 with DAG(
-    dag_id="stg_loader_dag",
-    schedule_interval="*/10 * * * *",
+    dag_id="stg_loader",
+    schedule_interval=None,
     start_date=datetime(2025, 9, 16),
     catchup=False,
     max_active_runs=1,

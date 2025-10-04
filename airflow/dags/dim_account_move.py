@@ -121,7 +121,7 @@ with DAG(
     'dim_account_move',
     default_args=default_args,
     description='ETL DAG for dim_account_move (auto schema + upsert)',
-    schedule_interval='*/10 * * * *',
+    schedule_interval=None,
     start_date=datetime(2025, 9, 16),
     catchup=False,
     tags=['dwh', 'dimension'],
