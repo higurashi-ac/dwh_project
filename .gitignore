@@ -7,8 +7,8 @@ __pycache__/
 .vscode/
 
 # Docker volumes (Postgres data)
-data_dumps/
 postgres_data/
+data_dumps/
 
 # Logs
 logs/
