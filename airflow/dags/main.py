@@ -21,6 +21,13 @@ with DAG(
     tags=['orchestrator', 'dwh'],
 ) as dag:
 
+    # Detached dimension
+    dim_date = TriggerDagRunOperator(
+        task_id="run_dim_date",
+        trigger_dag_id="dim_date",
+        wait_for_completion=True
+    )
+    
     # Stage loader
     stg_loader = TriggerDagRunOperator(
         task_id="run_stg_loader",
@@ -30,8 +37,8 @@ with DAG(
 
     # Dimension DAG names
     dim_dags = [
-        "dim_date"
-        ,"dim_employee"
+        #"dim_date"
+        "dim_employee"
         ,"dim_partner"
         ,"dim_planning_slot"
         ,"dim_sale_order"
@@ -50,8 +57,10 @@ with DAG(
             trigger_dag_id=dag_name,
             wait_for_completion=True
         )
+        
         for dag_name in dim_dags
     }
+
 
     # Dependent dimension DAGs
     dim_customer = TriggerDagRunOperator(
@@ -80,8 +89,9 @@ with DAG(
     #)
 
     # Orchestration order
+    dim_date
     stg_loader >> list(dim_tasks.values())
-
+    
     # Customer dependencies
     dim_tasks["dim_partner"] >> dim_customer
     dim_tasks["dim_sale_order"] >> dim_customer
