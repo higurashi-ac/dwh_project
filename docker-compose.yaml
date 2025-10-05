@@ -42,14 +42,10 @@ services:
     command: webserver
     ports:
       - "8080:8080"
-    #environment:
-    #  - _PIP_ADDITIONAL_REQUIREMENTS=-r /opt/airflow/requirements.txt
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-    #  - ./airflow/bootstrap:/opt/airflow/bootstrap
-    #  - ./requirements.txt:/opt/airflow/requirements.txt
     networks:
       - local_net
     depends_on:
@@ -87,20 +83,19 @@ services:
 #    networks:
 #      - local_net
 
-#  metabase:
-#    image: metabase/metabase:v0.48.6
-#    container_name: metabase
-#    restart: always
-#    env_file: .env
-#    volumes:
-#      - ./metabase_data:/metabase-data    
-#    ports:
-#      - "3000:3000"
-#    networks:
-#      - local_net      
-#
+  metabase:
+    image: metabase/metabase:v0.56.x
+    container_name: metabase
+    restart: always
+    env_file: .env
+    volumes:
+      - ./metabase_data:/metabase-data    
+    ports:
+      - "3000:3000"
+    networks:
+      - local_net      
 
-#  jupyter:
+  #  jupyter:
 #    image: jupyter/datascience-notebook:python-3.11.6
 #    container_name: jupyter
 #    restart: always
