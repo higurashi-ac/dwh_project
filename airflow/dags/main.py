@@ -15,18 +15,18 @@ with DAG(
     'main_dag',
     default_args=default_args,
     description='Master orchestrator DAG for staging, dimensions, and facts',
-    schedule_interval='*/30 * * * *',
+    schedule_interval=None, #'*/30 * * * *',
     start_date=datetime(2025, 9, 16),
     catchup=False,
     tags=['orchestrator', 'dwh'],
 ) as dag:
 
     # Detached dimension
-    dim_date = TriggerDagRunOperator(
-        task_id="run_dim_date",
-        trigger_dag_id="dim_date",
-        wait_for_completion=True
-    )
+    #dim_date = TriggerDagRunOperator(
+    #    task_id="run_dim_date",
+    #    trigger_dag_id="dim_date",
+    #    wait_for_completion=True
+    #)
     
     # Stage loader
     stg_loader = TriggerDagRunOperator(
@@ -38,7 +38,7 @@ with DAG(
     # Dimension DAG names
     dim_dags = [
         #"dim_date"
-        "dim_employee"
+         "dim_employee"
         ,"dim_partner"
         ,"dim_planning_slot"
         ,"dim_sale_order"
@@ -61,7 +61,19 @@ with DAG(
         for dag_name in dim_dags
     }
 
+    # Unpacking dimension tasks for easier access
+    dim_employee            = dim_tasks["dim_employee"]
+    dim_partner             = dim_tasks["dim_partner"]
+    dim_planning_slot       = dim_tasks["dim_planning_slot"]
+    dim_sale_order          = dim_tasks["dim_sale_order"]
+    dim_sale_order_line     = dim_tasks["dim_sale_order_line"]
+    dim_purchase_order      = dim_tasks["dim_purchase_order"]
+    dim_purchase_order_line = dim_tasks["dim_purchase_order_line"]
+    dim_account_move        = dim_tasks["dim_account_move"]
+    dim_account_journal     = dim_tasks["dim_account_journal"]
+    dim_payment_justify     = dim_tasks["dim_payment_justify"]
 
+    
     # Dependent dimension DAGs
     dim_customer = TriggerDagRunOperator(
         task_id="run_dim_customer",
@@ -76,11 +88,11 @@ with DAG(
     )
 
     # Fact tables
-    #fact_sales = TriggerDagRunOperator(
-    #    task_id="run_fact_sales",
-    #    trigger_dag_id="fact_sales",
-    #    wait_for_completion=True
-    #)
+    fact_sales = TriggerDagRunOperator(
+        task_id="run_fact_sales",
+        trigger_dag_id="fact_sales",
+        wait_for_completion=True
+    )
 
     #fact_purchases = TriggerDagRunOperator(
     #    task_id="run_fact_purchases",
@@ -88,18 +100,19 @@ with DAG(
     #    wait_for_completion=True
     #)
 
+
     # Orchestration order
-    dim_date
+    #dim_date
     stg_loader >> list(dim_tasks.values())
     
     # Customer dependencies
-    dim_tasks["dim_partner"] >> dim_customer
-    dim_tasks["dim_sale_order"] >> dim_customer
+    dim_partner >> dim_customer
+    dim_sale_order >> dim_customer
 
     # Supplier dependencies
-    dim_tasks["dim_partner"] >> dim_supplier
-    dim_tasks["dim_purchase_order"] >> dim_supplier
+    dim_partner >> dim_supplier
+    dim_purchase_order >> dim_supplier
 
     # Facts dependencies
-    #[dim_customer, dim_sale_order, dim_sale_order_line] >> fact_sales
+    [dim_customer, dim_sale_order, dim_sale_order_line] >> fact_sales
     #[dim_supplier, dim_purchase_order, dim_purchase_order_line] >> fact_purchases
