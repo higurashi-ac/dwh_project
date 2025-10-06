@@ -9,7 +9,7 @@ __pycache__/
 # Docker volumes (Postgres data)
 postgres_data/
 data_dumps/
-views/
+#views/
 
 # Logs
 logs/

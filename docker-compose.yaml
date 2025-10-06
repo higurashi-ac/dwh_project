@@ -68,48 +68,25 @@ services:
       - postgres
       - airflow-init
 
-#  pgadmin:
-#    image: dpage/pgadmin4:latest
-#    container_name: pgadmin
-#    environment:
-#      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-#      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-#    ports:
-#      - "5050:80"
-#    volumes:
-#      - ./pgadmin_data:/var/lib/pgadmin
-#    depends_on:
-#      - postgres
-#    networks:
-#      - local_net
-
   metabase:
     image: metabase/metabase:v0.56.x
     container_name: metabase
     restart: always
     env_file: .env
-    volumes:
-      - ./metabase_data:/metabase-data    
+#    volumes:
+#      - ./metabase_data:/metabase-data > we are using Postgres for Metabase storage
     ports:
       - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
-      - local_net      
-
-  #  jupyter:
-#    image: jupyter/datascience-notebook:python-3.11.6
-#    container_name: jupyter
-#    restart: always
-#    volumes:
-#      - ./jupyter:/home/jovyan/work
-#      - ./dumps:/home/jovyan/dumps
-#    networks:
-#      - local_net      
-#    ports:
-#      - "8888:8888"
+      - local_net
 
 volumes:
   postgres_data:
 
 networks:
   local_net:
-    driver: bridge
+    name: local_net
+    driver: bridge    
