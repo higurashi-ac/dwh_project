@@ -7,6 +7,7 @@ id as so_id
 ,date_order::date as so_date
 ,partner_id as customer_id
 ,note as so_note
+,planning_id as planning_slot_id
 
 ,discount_type
 ,discount_rate
@@ -20,7 +21,7 @@ id as so_id
 ,region
 ,ville_client
 ,region_client
-,ref_intervention
+,ref_intervention as so_ref_intervention
 ,source
 ,relance
 ,note_relance
@@ -70,7 +71,6 @@ id as so_id
 --,delivery_message
 --,delivery_rating_success
 --,recompute_delivery_price
---,planning_id
 --,type_devis
 --,code_promo_program_id
 --,force_invoiced

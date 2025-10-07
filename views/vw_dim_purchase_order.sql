@@ -3,10 +3,11 @@ SELECT
 id as po_id
 ,name as po_name
 ,partner_id as supplier_id
-,partner_ref as "partner_ref (PL.name_seq)"
-,COALESCE((REGEXP_MATCH(partner_ref, '#\d+'))[1],'#' || (REGEXP_MATCH(partner_ref, '(^|\s)(\d{4,5})($|\s)'))[2]) as name_seq_clean
-,(REGEXP_MATCH(partner_ref, 'D\d+'))[1] as so_name
-,case when LOWER(partner_ref) like '%stock%' then true else false end as in_stock
+,partner_ref
+,coalesce((regexp_match(partner_ref, '#\d+'))[1],'#' 
+        || (regexp_match(partner_ref, '(^|\s)(\d{4,5})($|\s)'))[2]) as po_ref_intervention
+,(regexp_match(partner_ref, 'D\d+'))[1] as so_name
+,case when lower(partner_ref) like '%stock%' then true else false end as in_stock
 ,date_order::date as order_date
 ,date_approve::date as approve_date
 ,state as po_state
@@ -41,4 +42,5 @@ id as po_id
 --,report_grids
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_purchase_order;
+FROM dwh.dim_purchase_order
+order by 1 desc, 2;

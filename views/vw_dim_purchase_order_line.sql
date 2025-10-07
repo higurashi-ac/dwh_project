@@ -1,14 +1,15 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_purchase_order_line AS
 SELECT
-id as po_line_id
 --,purchase_order_line_sk
-,name as po_line_name
-,order_id as po_id
+order_id as po_id
+,id as po_line_id
+,concat('PO-', order_id,'-',row_number() over(partition by order_id order by id) ) as po_line_key
+,name as po_line_desc
 ,sequence
 ,state as po_line_state
 ,product_qty
 ,product_uom_qty
-,date_planned
+,date_planned::date as date_planned
 ,product_uom
 ,product_id
 ,price_unit
@@ -46,4 +47,4 @@ id as po_line_id
 --,etl_loaded_at
 --,etl_batch_id
 FROM dwh.dim_purchase_order_line
-order by 3 desc, 1;
+order by po_id desc, po_line_id;
