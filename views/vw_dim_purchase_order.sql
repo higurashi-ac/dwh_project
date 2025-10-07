@@ -1,31 +1,34 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_purchase_order AS
 SELECT
-purchase_order_sk
---,id
---,name
---,origin
---,partner_ref
---,date_order
---,date_approve
---,partner_id
---,dest_address_id
---,currency_id
---,state
---,notes
---,invoice_count
---,invoice_status
+id as po_id
+,name as po_name
+,partner_id as supplier_id
+,partner_ref as "partner_ref (PL.name_seq)"
+,COALESCE((REGEXP_MATCH(partner_ref, '#\d+'))[1],'#' || (REGEXP_MATCH(partner_ref, '(^|\s)(\d{4,5})($|\s)'))[2]) as name_seq_clean
+,(REGEXP_MATCH(partner_ref, 'D\d+'))[1] as so_name
+,case when LOWER(partner_ref) like '%stock%' then true else false end as in_stock
+,date_order::date as order_date
+,date_approve::date as approve_date
+,state as po_state
+,notes as po_notes
+,invoice_count
+,invoice_status
+,amount_untaxed
+,amount_tax
+,amount_total
+,fiscal_position_id
+,payment_term_id
+,user_id
+,company_id
+,currency_rate
+,"Note" as po_note
+,"Adresse"
+
 --,date_planned
---,amount_untaxed
---,amount_tax
---,amount_total
---,fiscal_position_id
---,payment_term_id
 --,incoterm_id
---,user_id
---,company_id
---,currency_rate
 --,message_main_attachment_id
 --,access_token
+--,origin
 --,create_uid
 --,create_date
 --,write_uid
@@ -35,8 +38,6 @@ purchase_order_sk
 --,group_id
 --,hide_net_price
 --,dispatch_type
---,Note
---,Adresse
 --,report_grids
 --,etl_loaded_at
 --,etl_batch_id

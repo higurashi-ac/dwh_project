@@ -1,12 +1,12 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_sale_order AS
 SELECT
-id as order_id
-,name
+id as so_id
+,name as so_name
 ,project_title
-,state
-,date_order::date as order_date
-,partner_id
-,note
+,state as so_state
+,date_order::date as so_date
+,partner_id as customer_id
+,note as so_note
 
 ,discount_type
 ,discount_rate
@@ -84,4 +84,5 @@ id as order_id
 --,invoice_id
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_sale_order;
+FROM dwh.dim_sale_order
+order by 1 desc;

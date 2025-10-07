@@ -1,36 +1,36 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_sale_order_line AS
 SELECT
-sale_order_line_sk
---,id
---,order_id
---,name
---,sequence
---,invoice_status
---,price_unit
---,price_subtotal
---,price_tax
---,price_total
---,price_reduce
---,price_reduce_taxinc
---,price_reduce_taxexcl
---,discount
---,product_id
---,product_uom_qty
---,product_uom
---,qty_delivered_method
---,qty_delivered
---,qty_delivered_manual
---,qty_to_invoice
---,qty_invoiced
---,untaxed_amount_invoiced
---,untaxed_amount_to_invoice
---,salesman_id
+--,sale_order_line_sk
+order_id as so_id
+,id as so_line_id
+,name as so_line_name
+,order_partner_id as customer_id
+,sequence
+,invoice_status
+,price_unit
+,price_subtotal
+,price_tax
+,discount
+,price_total
+,price_reduce
+,price_reduce_taxinc
+,price_reduce_taxexcl
+,product_id
+,product_uom_qty
+,product_uom
+,qty_delivered_method
+,qty_delivered
+,qty_delivered_manual
+,qty_to_invoice
+,qty_invoiced
+,untaxed_amount_invoiced
+,untaxed_amount_to_invoice
+,salesman_id
+,company_id
+
 --,currency_id
---,company_id
---,order_partner_id
 --,is_expense
 --,is_downpayment
---,state
 --,customer_lead
 --,display_type
 --,create_uid
@@ -52,4 +52,5 @@ sale_order_line_sk
 --,hide_net_price
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_sale_order_line;
+FROM dwh.dim_sale_order_line
+order by 1 desc, 2;

@@ -1,7 +1,7 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_partner AS
 SELECT
-partner_sk
---,id
+id as partner_id
+--,partner_sk
 --,name
 --,company_id
 --,create_date
