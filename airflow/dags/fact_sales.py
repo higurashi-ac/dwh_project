@@ -16,10 +16,9 @@ sql_fact_sales = """
 CREATE SCHEMA IF NOT EXISTS dwh;
 
 CREATE TABLE IF NOT EXISTS dwh.fact_sales (
-      order_id INT
+      order_date DATE
+    , order_id INT
     , order_line_id INT
-    , order_name TEXT
-    , order_date DATE
     , customer_id INT
     , price_unit NUMERIC
     , product_uom_qty NUMERIC
@@ -34,10 +33,9 @@ CREATE TABLE IF NOT EXISTS dwh.fact_sales (
 -- TRUNCATE TABLE dwh.fact_sales;
 
 INSERT INTO dwh.fact_sales (
-      order_id
+      order_date
+    , order_id
     , order_line_id
-    , order_name
-    , order_date
     , customer_id
     , price_unit
     , product_uom_qty
@@ -49,10 +47,9 @@ INSERT INTO dwh.fact_sales (
 )
 WITH base AS (
     SELECT
-          s.id           AS order_id
+          s.date_order   AS order_date
+        , s.id           AS order_id
         , sl.id          AS order_line_id
-        , s.name         AS order_name
-        , d.full_date    AS order_date
         , c.id           AS customer_id
         --, p.product_id   AS product_id  -- future join
         , sl.price_unit
@@ -65,7 +62,7 @@ WITH base AS (
 
     FROM dwh.dim_sale_order_line sl
     JOIN dwh.dim_sale_order s ON sl.order_id = s.id
-    JOIN dwh.dim_date d ON s.date_order::date = d.full_date
+    --JOIN dwh.dim_date d ON s.date_order::date = d.full_date -- to be dealt with in reporting layer (Metabase)
     JOIN dwh.dim_customer c ON s.partner_id = c.id
     --JOIN dwh.dim_product p ON sl.product_id = p.id  -- to be added later
 )

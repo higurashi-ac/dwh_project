@@ -76,7 +76,7 @@ services:
 #    volumes:
 #      - ./metabase_data:/metabase-data > we are using Postgres for Metabase storage
     ports:
-      - "3000:3000"
+      - "3003:3000"
     depends_on:
       postgres:
         condition: service_healthy
