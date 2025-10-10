@@ -41,7 +41,6 @@ def generate_holidays():
 
 
 sql_dim_date = """
-CREATE SCHEMA IF NOT EXISTS dwh;
 
 CREATE TABLE IF NOT EXISTS dwh.dim_date AS
 WITH dates AS (

@@ -9,28 +9,22 @@ from sqlalchemy import create_engine
 
 # Table metadata
 TABLES = [
-    {"name": "hr_employee", "pk": "employee_id", "inc_col": "write_date"},
-    {"name": "res_partner", "pk": "partner_id", "inc_col": "write_date"},
-    {"name": "planning_slot", "pk": "planning_slot_id", "inc_col": "write_date"},
-    {"name": "sale_order", "pk": "sale_order_id", "inc_col": "write_date"},
-    {"name": "sale_order_line", "pk": "sale_order_line_id", "inc_col": "write_date"},
-    {"name": "purchase_order", "pk": "purchase_order_id", "inc_col": "write_date"},
-    {"name": "purchase_order_line", "pk": "purchase_order_line_id", "inc_col": "write_date"},
-    {"name": "account_move", "pk": "account_move_id", "inc_col": "write_date"},
-    {"name": "account_journal", "pk": "account_journal_id", "inc_col": "write_date"},
-    {"name": "payment_justify", "pk": "payment_justify_id", "inc_col": "write_date"},
+    {"name": "hr_employee"         , "pk": "employee_id"            , "inc_col": "write_date"},
+    {"name": "res_partner"         , "pk": "partner_id"             , "inc_col": "write_date"},
+    {"name": "planning_slot"       , "pk": "planning_slot_id"       , "inc_col": "write_date"},
+    {"name": "sale_order"          , "pk": "sale_order_id"          , "inc_col": "write_date"},
+    {"name": "sale_order_line"     , "pk": "sale_order_line_id"     , "inc_col": "write_date"},
+    {"name": "purchase_order"      , "pk": "purchase_order_id"      , "inc_col": "write_date"},
+    {"name": "purchase_order_line" , "pk": "purchase_order_line_id" , "inc_col": "write_date"},
+    {"name": "account_move"        , "pk": "account_move_id"        , "inc_col": "write_date"},
+    {"name": "account_journal"     , "pk": "account_journal_id"     , "inc_col": "write_date"},
+    {"name": "payment_justify"     , "pk": "payment_justify_id"     , "inc_col": "write_date"},
 ]
 
 # --- Helper function to create staging tables dynamically ---
 def ensure_staging_tables(source_conn_id, target_conn_id, tables):
     source_hook = PostgresHook(postgres_conn_id=source_conn_id)
     target_hook = PostgresHook(postgres_conn_id=target_conn_id)
-
-    # Ensure staging schema exists
-    target_hook.run("CREATE SCHEMA IF NOT EXISTS stg;")
-    logging.info("✅ Ensured stg schema exists")
-    target_hook.run("CREATE SCHEMA IF NOT EXISTS dwh;")
-    logging.info("✅ Ensured dwh schema exists")
 
     for table in tables:
         table_name = table['name']

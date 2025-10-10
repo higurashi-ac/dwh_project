@@ -1,54 +1,78 @@
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.models import Variable
+from airflow.operators.python import PythonOperator
+from audit_utils import log_etl_status
 import logging
+import os
+
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retries': 2,
+    'retry_delay': timedelta(minutes=2),
 }
 
-load_mode = Variable.get("load_mode_dim_supplier", default_var="INCREMENTAL")
-
-def build_dim_supplier_sql():
-    """
-    Build SQL dynamically for dim_supplier:
-    - CREATE TABLE if not exists
-    - UPSERT from dim_partner joining dim_purchase_order
-    - Auditing fields added
-    """
+def run_and_audit(table_name, sql_builder, **context):
+    task_id = context["task"].task_id
+    dag_id = context["dag"].dag_id
+    started_at = datetime.now()
     pg_hook = PostgresHook(postgres_conn_id="postgres_public")
 
-    # Get columns from res_partner
-    cols_info = pg_hook.get_records("""
+    try:
+        sql = sql_builder(table_name)
+        pg_hook.run(sql)
+        rows = pg_hook.get_first(f"SELECT COUNT(*) FROM dwh.dim_{table_name};")
+        rows = rows[0] if rows else 0
+
+        log_etl_status(
+            dag_id=dag_id,
+            task_id=task_id,
+            table_name=f"dwh.dim_{table_name}",
+            status="SUCCESS",
+            rows_affected=rows,
+            started_at=started_at
+        )
+    except Exception as e:
+        log_etl_status(
+            dag_id=dag_id,
+            task_id=task_id,
+            table_name=f"dwh.dim_{table_name}",
+            status="FAILED",
+            error_message=str(e),
+            started_at=started_at
+        )
+        raise
+
+def build_dim_sql(table_name):
+    pg_hook = PostgresHook(postgres_conn_id="postgres_public")
+
+    cols_info = pg_hook.get_records(f"""
         SELECT column_name, data_type
         FROM information_schema.columns
         WHERE table_schema = 'stg'
-          AND table_name = 'res_partner'
+          AND table_name = '{table_name}'
         ORDER BY ordinal_position;
     """)
 
     if not cols_info:
-        raise ValueError("No columns found in stg.res_partner")
+        raise ValueError(f"No columns found in stg.{table_name}")
 
     fixed_columns = [
-        '"supplier_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
+        f'"{table_name}_sk" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY',
         '"id" INT UNIQUE'
     ]
 
     dynamic_columns = []
     insert_cols = ['id']
-    insert_select = ['p.id']
+    insert_select = ['id']
     update_set = []
 
     for col_name, data_type in cols_info:
-        if col_name in ("id"):
+        if col_name == "id":
             continue
 
         if data_type == "character varying":
@@ -66,10 +90,12 @@ def build_dim_supplier_sql():
         else:
             dtype = data_type.upper()
 
-        dynamic_columns.append(f'"{col_name}" {dtype}')
+        #sensitive case "majus"
+        col_name = f'"{col_name}"'
+        dynamic_columns.append(f'{col_name} {dtype}')
         insert_cols.append(col_name)
-        insert_select.append(f"p.{col_name}")
-        update_set.append(f"{col_name} = EXCLUDED.{col_name}")
+        insert_select.append(col_name)
+        update_set.append(f'{col_name} = EXCLUDED.{col_name}')
 
     audit_columns = [
         '"etl_loaded_at" TIMESTAMP DEFAULT now()',
@@ -77,19 +103,17 @@ def build_dim_supplier_sql():
     ]
     dynamic_columns += audit_columns
     insert_cols += ['etl_loaded_at', 'etl_batch_id']
-    insert_select += ['now() AS etl_loaded_at', 'gen_random_uuid() AS etl_batch_id']
-    update_set += ['etl_loaded_at = EXCLUDED.etl_loaded_at', 'etl_batch_id = EXCLUDED.etl_batch_id']
+    insert_select += ['now() AS "etl_loaded_at"', 'gen_random_uuid() AS "etl_batch_id"']
+    update_set += ['"etl_loaded_at" = EXCLUDED."etl_loaded_at"', '"etl_batch_id" = EXCLUDED."etl_batch_id"']
 
     create_sql = f"""
-    CREATE SCHEMA IF NOT EXISTS dwh;
-
-    CREATE TABLE IF NOT EXISTS dwh.dim_supplier (
+    CREATE TABLE IF NOT EXISTS dwh.dim_{table_name} (
         {', '.join(fixed_columns + dynamic_columns)}
     );
     """
 
     upsert_sql = f"""
-    INSERT INTO dwh.dim_supplier (
+    INSERT INTO dwh.dim_{table_name} (
         {', '.join(insert_cols)}
     )
     WITH base AS (
@@ -103,40 +127,35 @@ def build_dim_supplier_sql():
     )
     SELECT * FROM base
     ON CONFLICT (id) DO UPDATE
-    SET {', '.join(update_set)};
+    SET {', '.join(update_set)}
+   
+    ;
     """
-
     full_sql = create_sql + "\n" + upsert_sql
-    logging.info(f"Generated SQL for dim_supplier:\n{full_sql}")
+    logger = logging.getLogger(__name__)
     return full_sql
 
 
+TABLE_NAME = os.path.splitext(os.path.basename(__file__))[0].replace("dim_", "")
+if not TABLE_NAME:
+    raise ValueError("Invalid DAG filename format. Expected dim_<table>.py")
+
 with DAG(
-    'dim_supplier',
+    dag_id=f'dim_{TABLE_NAME}',
     default_args=default_args,
-    description='ETL DAG for dim_supplier',
-    #schedule_interval='*/10 * * * *',
-    schedule_interval=None,  # no schedule, the main dag => main.py (orchestrator) will decide on this file's order
+    description=f'ETL DAG for dim_{TABLE_NAME} (auto schema + upsert)',
+    schedule_interval=None,
     start_date=datetime(2025, 9, 16),
     catchup=False,
+    max_active_runs=1,
     tags=['dwh', 'dimension'],
 ) as dag:
 
-    if load_mode.upper() == "FULL":
-        truncate_task = PostgresOperator(
-            task_id='truncate_dim_supplier',
-            postgres_conn_id='postgres_public',
-            sql='TRUNCATE TABLE dwh.dim_supplier;'
-        )
-        load_task = PostgresOperator(
-            task_id='load_dim_supplier_full',
-            postgres_conn_id='postgres_public',
-            sql=build_dim_supplier_sql()
-        )
-        truncate_task >> load_task
-    else:
-        load_task = PostgresOperator(
-            task_id='load_dim_supplier_incremental',
-            postgres_conn_id='postgres_public',
-            sql=build_dim_supplier_sql()
-        )
+    load_task = PythonOperator(
+        task_id=f"load_dim_{TABLE_NAME}",
+        python_callable=run_and_audit,
+        op_kwargs={
+            "table_name": TABLE_NAME,
+            "sql_builder": build_dim_sql
+        }
+    )

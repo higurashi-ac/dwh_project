@@ -13,7 +13,6 @@ default_args = {
 
 # Your fact_sales SQL
 sql_fact_sales = """
-CREATE SCHEMA IF NOT EXISTS dwh;
 
 CREATE TABLE IF NOT EXISTS dwh.fact_sales (
       order_date DATE
