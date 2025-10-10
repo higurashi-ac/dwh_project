@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_employee AS
+CREATE OR REPLACE VIEW dwh.vw_dim_hr_employee AS
 SELECT
 employee_id
 --,employee_sk
@@ -69,4 +69,4 @@ employee_id
 --,order_display
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_employee;
+FROM dwh.dim_hr_employee;

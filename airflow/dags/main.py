@@ -1,9 +1,7 @@
-import os
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
-# Default arguments
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -13,56 +11,71 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-DAG_FOLDER = "/opt/airflow/dags"
-
 with DAG(
     'main_dag',
     default_args=default_args,
-    max_active_tasks=2,
+    max_active_runs=4,
     description='Master orchestrator DAG for staging, dimensions, and facts',
-    schedule_interval=None, #'*/15 * * * *',
+    schedule_interval='*/15 7-18 * * 1-5',  # Every 15 minutes from 7 AM to 6:45 PM, Monday to Friday
     start_date=datetime(2025, 9, 16),
     catchup=False,
     tags=['orchestrator', 'dwh'],
 ) as dag:
 
-    # Stage loader
+    # Detached dimension
+    #dim_date = TriggerDagRunOperator(
+    #    task_id="run_dim_date",
+    #    trigger_dag_id="dim_date",
+    #    wait_for_completion=True
+    #)
+    
+    # Staging loader
     stg_loader = TriggerDagRunOperator(
         task_id="run_stg_loader",
         trigger_dag_id="stg_loader",
         wait_for_completion=True
     )
 
-    # Dynamically find DAG files in the folder
-    all_dag_files = [
-        f[:-3] for f in os.listdir(DAG_FOLDER)
-        if f.endswith(".py") and f != "main.py" and f != "stg_loader.py"
+    # Dimension DAG names
+    dim_dags = [
+        #"dim_date"
+         "dim_hr_employee"
+        ,"dim_res_partner"
+        ,"dim_planning_slot"
+        ,"dim_sale_order"
+        ,"dim_sale_order_line"
+        ,"dim_purchase_order"
+        ,"dim_purchase_order_line"
+        ,"dim_account_move"
+        ,"dim_account_journal"
+        ,"dim_payment_justify"
     ]
 
-    # DAGs that should not be included in the auto-trigger loop
-    dependant_dags = [
-        "stg_loader",
-        "main_dag",
-        "dim_customer",
-        "dim_supplier",
-        "fact_sales",
-        # "fact_purchases"  # hedhi later, prbly finance too
-    ]
-
-    # Exclude dependant DAGs
-    dim_dags = [dag_name for dag_name in all_dag_files if dag_name not in dependant_dags]
-
-    # Create Trigger tasks dynamically
+    # Create Trigger tasks dynamically for dimension DAGs
     dim_tasks = {
         dag_name: TriggerDagRunOperator(
             task_id=f"run_{dag_name}",
             trigger_dag_id=dag_name,
             wait_for_completion=True
         )
+        
         for dag_name in dim_dags
     }
 
-    # Dependent DAGs defined manually
+    # Unpacking dimension tasks for easier access
+    dim_hr_employee         = dim_tasks["dim_hr_employee"]
+    dim_res_partner         = dim_tasks["dim_res_partner"]
+    dim_planning_slot       = dim_tasks["dim_planning_slot"]
+    dim_sale_order          = dim_tasks["dim_sale_order"]
+    dim_sale_order_line     = dim_tasks["dim_sale_order_line"]
+    dim_purchase_order      = dim_tasks["dim_purchase_order"]
+    dim_purchase_order_line = dim_tasks["dim_purchase_order_line"]
+    dim_account_move        = dim_tasks["dim_account_move"]
+    dim_account_journal     = dim_tasks["dim_account_journal"]
+    dim_payment_justify     = dim_tasks["dim_payment_justify"]
+
+    
+    # Dependent dimension DAGs
     dim_customer = TriggerDagRunOperator(
         task_id="run_dim_customer",
         trigger_dag_id="dim_customer",
@@ -75,29 +88,32 @@ with DAG(
         wait_for_completion=True
     )
 
+    # Fact tables
     fact_sales = TriggerDagRunOperator(
         task_id="run_fact_sales",
         trigger_dag_id="fact_sales",
         wait_for_completion=True
     )
 
-    # Orchestration
+    #fact_purchases = TriggerDagRunOperator(
+    #    task_id="run_fact_purchases",
+    #    trigger_dag_id="fact_purchases",
+    #    wait_for_completion=True
+    #)
+
+
+    # Orchestration order
+    #dim_date
     stg_loader >> list(dim_tasks.values())
+    
+    # Customer dependencies
+    dim_res_partner >> dim_customer
+    dim_sale_order >> dim_customer
 
-    # Dependencies between DAGs
-    if "dim_partner" in dim_tasks and "dim_sale_order" in dim_tasks and "dim_purchase_order" in dim_tasks:
-        dim_partner = dim_tasks["dim_partner"]
-        dim_sale_order = dim_tasks["dim_sale_order"]
-        dim_purchase_order = dim_tasks["dim_purchase_order"]
+    # Supplier dependencies
+    dim_res_partner >> dim_supplier
+    dim_purchase_order >> dim_supplier
 
-        # Customer dependencies
-        dim_partner >> dim_customer
-        dim_sale_order >> dim_customer
-
-        # Supplier dependencies
-        dim_partner >> dim_supplier
-        dim_purchase_order >> dim_supplier
-
-        # Facts dependencies
-        [dim_customer, dim_sale_order, dim_tasks.get("dim_sale_order_line")] >> fact_sales
-        #[dim_supplier, dim_purchase_order, dim_purchase_order_line] >> fact_purchases
+    # Facts dependencies
+    [dim_customer, dim_sale_order, dim_sale_order_line] >> fact_sales
+    #[dim_supplier, dim_purchase_order, dim_purchase_order_line] >> fact_purchases

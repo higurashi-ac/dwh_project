@@ -1,11 +1,9 @@
-from datetime import datetime, timedelta
-from airflow import DAG
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.operators.python import PythonOperator
-from audit_utils import log_etl_status
-import logging
+from datetime import datetime, timedelta
+from airflow import DAG
+from run_and_audit import run_and_audit
 import os
-
 
 default_args = {
     'owner': 'airflow',
@@ -16,38 +14,8 @@ default_args = {
     'retry_delay': timedelta(minutes=2),
 }
 
-def run_and_audit(table_name, sql_builder, **context):
-    task_id = context["task"].task_id
-    dag_id = context["dag"].dag_id
-    started_at = datetime.now()
-    pg_hook = PostgresHook(postgres_conn_id="postgres_public")
-
-    try:
-        sql = sql_builder(table_name)
-        pg_hook.run(sql)
-        rows = pg_hook.get_first(f"SELECT COUNT(*) FROM dwh.dim_{table_name};")
-        rows = rows[0] if rows else 0
-
-        log_etl_status(
-            dag_id=dag_id,
-            task_id=task_id,
-            table_name=f"dwh.dim_{table_name}",
-            status="SUCCESS",
-            rows_affected=rows,
-            started_at=started_at
-        )
-    except Exception as e:
-        log_etl_status(
-            dag_id=dag_id,
-            task_id=task_id,
-            table_name=f"dwh.dim_{table_name}",
-            status="FAILED",
-            error_message=str(e),
-            started_at=started_at
-        )
-        raise
-
 def build_dim_sql(table_name):
+
     pg_hook = PostgresHook(postgres_conn_id="postgres_public")
 
     cols_info = pg_hook.get_records(f"""
@@ -67,8 +35,8 @@ def build_dim_sql(table_name):
     ]
 
     dynamic_columns = []
-    insert_cols = ['id']
-    insert_select = ['id']
+    insert_cols = ['"id"']
+    insert_select = ['"id"']
     update_set = []
 
     for col_name, data_type in cols_info:
@@ -90,7 +58,6 @@ def build_dim_sql(table_name):
         else:
             dtype = data_type.upper()
 
-        #sensitive case "majus"
         col_name = f'"{col_name}"'
         dynamic_columns.append(f'{col_name} {dtype}')
         insert_cols.append(col_name)
@@ -113,30 +80,31 @@ def build_dim_sql(table_name):
     """
 
     upsert_sql = f"""
+    WITH base AS (
+        SELECT
+            {', '.join(insert_select)},
+            row_number() OVER (PARTITION BY id ORDER BY write_date DESC) AS rn
+        FROM stg.{table_name} s
+    ),
+    final AS (
+        SELECT {', '.join(insert_cols)} FROM base WHERE rn = 1
+    )
     INSERT INTO dwh.dim_{table_name} (
         {', '.join(insert_cols)}
     )
-    with base as 
-    (SELECT
-        {', '.join(insert_select)}
-        ,row_number() over(partition by id order by write_date desc) as rn 
-    FROM stg.{table_name} s)
-    ,final as (select {', '.join(insert_cols)} from base where rn =1) 
-        
-    select * from final 
+    SELECT * FROM final
     ON CONFLICT (id) DO UPDATE
     SET {', '.join(update_set)}
-   
-    ;
+    RETURNING 1;
     """
-    full_sql = create_sql + "\n" + upsert_sql
-    logger = logging.getLogger(__name__)
-    return full_sql
+
+    return create_sql + "\n" + upsert_sql
 
 
 TABLE_NAME = os.path.splitext(os.path.basename(__file__))[0].replace("dim_", "")
 if not TABLE_NAME:
     raise ValueError("Invalid DAG filename format. Expected dim_<table>.py")
+
 
 with DAG(
     dag_id=f'dim_{TABLE_NAME}',
@@ -153,7 +121,9 @@ with DAG(
         task_id=f"load_dim_{TABLE_NAME}",
         python_callable=run_and_audit,
         op_kwargs={
-            "table_name": TABLE_NAME,
-            "sql_builder": build_dim_sql
+            'table_type': 'dim',
+            'table_name': f'{TABLE_NAME}',
+            'sql_builder': build_dim_sql
         }
     )
+    load_task

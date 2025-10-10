@@ -71,3 +71,4 @@ for sql_file in sorted(os.listdir(VIEWS_DIR)):
 cur.close()
 conn.close()
 print("Finished dropping and recreating all views.")
+# python ./utils/create_views_definedByAdmin.py : create and run all views and facts 

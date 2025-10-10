@@ -81,5 +81,5 @@ FROM dwh.{table_name};
 
 cur.close()
 conn.close()
-#docker exec -i postgres psql -U postgres -d dev_dwh -v schema=dwh -f /docker-entrypoint-initdb.d/utils/views/vw_dim_employee.sql
-# python ./utils/create_views.py : create and run all views and facts 
+
+# python ./utils/create_views_auto_dwh.py : create and run all views and facts 

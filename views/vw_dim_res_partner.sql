@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_partner AS
+CREATE OR REPLACE VIEW dwh.vw_dim_res_partner AS
 SELECT
 id as partner_id
 --,partner_sk
@@ -87,4 +87,4 @@ id as partner_id
 --,partner_delivery
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_partner;
+FROM dwh.dim_res_partner;

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.operators.python import PythonOperator
-from audit_utils import log_etl_status
+from run_and_audit import run_and_audit
 import logging
 import os
 
@@ -15,37 +15,6 @@ default_args = {
     'retries': 2,
     'retry_delay': timedelta(minutes=2),
 }
-
-def run_and_audit(table_name, sql_builder, **context):
-    task_id = context["task"].task_id
-    dag_id = context["dag"].dag_id
-    started_at = datetime.now()
-    pg_hook = PostgresHook(postgres_conn_id="postgres_public")
-
-    try:
-        sql = sql_builder(table_name)
-        pg_hook.run(sql)
-        rows = pg_hook.get_first(f"SELECT COUNT(*) FROM dwh.dim_{table_name};")
-        rows = rows[0] if rows else 0
-
-        log_etl_status(
-            dag_id=dag_id,
-            task_id=task_id,
-            table_name=f"dwh.dim_{table_name}",
-            status="SUCCESS",
-            rows_affected=rows,
-            started_at=started_at
-        )
-    except Exception as e:
-        log_etl_status(
-            dag_id=dag_id,
-            task_id=task_id,
-            table_name=f"dwh.dim_{table_name}",
-            status="FAILED",
-            error_message=str(e),
-            started_at=started_at
-        )
-        raise
 
 def build_dim_sql(table_name):
     pg_hook = PostgresHook(postgres_conn_id="postgres_public")
@@ -67,8 +36,8 @@ def build_dim_sql(table_name):
     ]
 
     dynamic_columns = []
-    insert_cols = ['id']
-    insert_select = ['id']
+    insert_cols = ['"id"']
+    insert_select = ['"id"']
     update_set = []
 
     for col_name, data_type in cols_info:
@@ -153,7 +122,9 @@ with DAG(
         task_id=f"load_dim_{TABLE_NAME}",
         python_callable=run_and_audit,
         op_kwargs={
-            "table_name": TABLE_NAME,
-            "sql_builder": build_dim_sql
+            'table_type': 'dim',
+            'table_name': f'{TABLE_NAME}',
+            'sql_builder': build_dim_sql
         }
     )
+    load_task

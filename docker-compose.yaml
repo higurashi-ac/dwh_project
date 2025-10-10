@@ -16,7 +16,7 @@ services:
       - local_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
   
@@ -24,14 +24,13 @@ services:
     image: apache/airflow:2.7.1
     container_name: airflow-init
     env_file: .env
-    entrypoint: /opt/airflow/bootstrap/init_connections.sh
+    entrypoint: ["/opt/airflow/bootstrap/wait_for_postgres.sh", "postgres", "bash", "/opt/airflow/bootstrap/init_connections.sh"]
     volumes:
     - ./airflow/bootstrap:/opt/airflow/bootstrap
     networks:
     - local_net
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
       
   airflow-webserver:
     image: apache/airflow:2.7.1
@@ -77,22 +76,36 @@ services:
       - postgres
       - airflow-init
 
-#  metabase:
-#    image: metabase/metabase:v0.56.x
-#    container_name: metabase
-#    environment:
-#      - TZ=${TZ}    
-#    restart: always
-#    env_file: .env
-##    volumes:
-##      - ./metabase_data:/metabase-data > we are using Postgres for Metabase storage
-#    ports:
-#      - "3003:3000"
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#    networks:
-#      - local_net
+  airflow-log-cleaner:
+    image: alpine
+    container_name: airflow-log-cleaner
+    volumes:
+      - ./airflow/logs:/opt/airflow/logs
+    command: >
+      sh -c "while true; do
+        find /opt/airflow/logs -type f -mmin +10 -delete
+        sleep 600;
+      done"
+    restart: unless-stopped
+    networks:
+      - local_net
+
+  metabase:
+    image: metabase/metabase:v0.56.7
+    container_name: metabase
+    environment:
+      - TZ=${TZ}    
+    restart: always
+    env_file: .env
+#    volumes:
+#      - ./metabase_data:/metabase-data #we are using Postgres for Metabase storage,Dashboards,saved questions,Users,permissions w config
+    ports:
+      - "3003:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - local_net
 
 volumes:
   postgres_data:
