@@ -1,6 +1,6 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_hr_employee AS
 SELECT
-    employee_id
+    id as employee_id
 ,   "name" as employee_name
 ,   job_id
 ,   job_title

@@ -4,7 +4,6 @@ select  order_date
 ,       order_id
 ,       order_line_id
 --,       product_id
-,       pl.planning_id
 ,       customer_id
 
 
@@ -21,8 +20,4 @@ select  order_date
 ,       sum(price_reduce) over(partition by order_id)  as sumOverReduce -- experimental
 
 from    dwh.fact_sales fs
-
-join    dwh.dim_planning_slot pl
-        on fs.planning_slot_id = pl.planning_slot_id
-
 order by order_date desc, order_id, order_line_id;

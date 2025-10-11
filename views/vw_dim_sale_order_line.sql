@@ -2,8 +2,8 @@ CREATE OR REPLACE VIEW dwh.vw_dim_sale_order_line AS
 SELECT
 --,sale_order_line_sk
 order_id                        as so_id
-                                as so_line_key
 ,concat(so.name,'-',row_number() over(partition by sl.order_id order by sl.id) )
+                                as so_line_key
 ,sl.id                          as so_line_id                                
 
 ,sl.name                        as so_line_name                                

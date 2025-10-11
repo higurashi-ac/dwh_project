@@ -1,6 +1,6 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_payment_justify AS
 SELECT
-    payment_justify_id
+    id as payment_justify_id
 ,   date_paiement
 ,   client
 ,   montant

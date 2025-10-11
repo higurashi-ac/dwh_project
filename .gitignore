@@ -11,6 +11,8 @@ postgres_data/
 metabase_data/
 utils/*.sql
 !utils/init.sql
+/schemas_generate/*
+!/schemas_generate/bootstrap
 #views/
 
 # Logs
@@ -28,3 +30,4 @@ airflow/bootstrap/
 *.swp
 
 artisan2go.session.sql
+.DS_Store

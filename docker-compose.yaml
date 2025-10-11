@@ -110,6 +110,20 @@ services:
 #    networks:
 #      - local_net
 
+  schemaspy:
+    image: schemaspy/schemaspy:7.0.2
+    container_name: schemaspy
+    env_file: .env
+    depends_on:
+      - postgres
+    networks:
+      - local_net
+    volumes:
+      - ./schemas_generate/output:/output
+      - ./schemas_generate/driver:/driver
+      - ./schemas_generate/bootstrap:/bootstrap
+    entrypoint: ["/bootstrap/init_drivers.sh"]
+
 volumes:
   postgres_data:
 
