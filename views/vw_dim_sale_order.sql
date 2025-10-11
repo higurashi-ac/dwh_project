@@ -1,34 +1,32 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_sale_order AS
 SELECT
-id as so_id
-,name as so_name
-,project_title
-,state as so_state
-,date_order::date as so_date
-,partner_id as customer_id
-,note as so_note
-,planning_id as planning_slot_id
-
-,discount_type
-,discount_rate
-,amount_discount
-,amount_untaxed
-,amount_tax
-,amount_total
-
-,state_devis
-,zip_client
-,region
-,ville_client
-,region_client
-,ref_intervention as so_ref_intervention
-,source
-,relance
-,note_relance
-,date_relance
-,responsable_intervention
-,remarque
-,status_pose
+id                          as so_id
+,"name"                     as so_name
+,project_title              as so_project_title
+,"state"                    as so_state
+,date_order::date           as so_date
+,partner_id                 as so_customer_id
+,note                       as so_note
+,planning_id                as so_planning_id
+,discount_type              as so_discount_type
+,discount_rate              as so_discount_rate
+,amount_discount            as so_amount_discount
+,amount_untaxed             as so_amount_untaxed
+,amount_tax                 as so_amount_tax
+,amount_total               as so_amount_total
+,state_devis                as so_state_devis
+,zip_client                 as so_zip_client
+,region                     as so_region
+,ville_client               as so_ville_client
+,region_client              as so_region_client
+,ref_intervention           as so_ref_intervention
+,source                     as so_source
+,relance                    as so_relance
+,note_relance               as so_note_relance
+,date_relance               as so_date_relance
+,responsable_intervention   as so_responsable_intervention
+,remarque                   as so_remarque
+,status_pose                as so_status_pose
 
 --,campaign_id
 --,source_id
@@ -85,4 +83,4 @@ id as so_id
 --,etl_loaded_at
 --,etl_batch_id
 FROM dwh.dim_sale_order
-order by 1 desc;
+order by so_id desc;

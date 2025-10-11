@@ -1,60 +1,76 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_account_move AS
 SELECT
-account_move_sk
---,id
+am.id
+,am."date"
+,am.invoice_date
+,am.invoice_date_due
+,am.create_date::date as sys_create_date
+,am.partner_id
+,case when c.id is not null then 'customer'
+      when s.id is not null then 'supplier'
+      else 'not defined'
+      end as partner_type
+,am.invoice_partner_display_name
+,am.partner_shipping_id
+,am.invoice_payment_state
+,am.invoice_payment_ref
+,am.ref
+,am."name"
+,am.invoice_origin -- to check against sale_order.name and to do some regex on it
+,am.invoice_sent
+,am.project_title
+,am.ville_client
+,am.region_client
+,am.amount_untaxed
+,am.amount_tax
+,am.amount_total
+,am.amount_residual
+,am.amount_untaxed_signed
+,am.amount_tax_signed
+,am.amount_total_signed
+,am.amount_residual_signed
+,am.narration
+,am."state"
+,am."type"
+,am.invoice_payment_term_id
+,am.invoice_partner_bank_id
+,am.to_check
+,am.journal_id
+,am.company_id
+,am.currency_id
+,am.tax_cash_basis_rec_id
+,am.auto_post
+,am.reversed_entry_id
+,am.fiscal_position_id
+,am.invoice_user_id
+,am.team_id
+,am.invoice_origin_id
+,am.relance_mail
+,am.relance_tel
+,am.date_relance_tel
+,am.date_relance_mail
+,am.note_relance
+,am.pose_fini
+,am.accompte
+,am.discount_type
+,am.discount_rate
+,am.amount_discount
 --,access_token
 --,message_main_attachment_id
---,name
---,date
---,ref
---,narration
---,state
---,type
---,to_check
---,journal_id
---,company_id
---,currency_id
---,partner_id
 --,commercial_partner_id
---,amount_untaxed
---,amount_tax
---,amount_total
---,amount_residual
---,amount_untaxed_signed
---,amount_tax_signed
---,amount_total_signed
---,amount_residual_signed
---,tax_cash_basis_rec_id
---,auto_post
---,reversed_entry_id
---,fiscal_position_id
---,invoice_user_id
---,invoice_payment_state
---,invoice_date
---,invoice_date_due
---,invoice_payment_ref
---,invoice_sent
---,invoice_origin
---,invoice_payment_term_id
---,invoice_partner_bank_id
 --,invoice_incoterm_id
 --,invoice_source_email
---,invoice_partner_display_name
 --,invoice_cash_rounding_id
 --,secure_sequence_number
 --,inalterable_hash
 --,create_uid
---,create_date
 --,write_uid
 --,write_date
 --,campaign_id
 --,source_id
 --,medium_id
---,team_id
---,partner_shipping_id
 --,stock_move_id
 --,style
---,project_title
 --,x_date_intervention
 --,x_reference
 --,x_interlocultaire
@@ -62,20 +78,12 @@ account_move_sk
 --,hide_net_price
 --,dispatch_type
 --,test
---,ville_client
---,region_client
---,invoice_origin_id
 --,x_serialnumber
---,relance_mail
---,relance_tel
---,date_relance_tel
---,date_relance_mail
---,note_relance
---,pose_fini
---,accompte
---,discount_type
---,discount_rate
---,amount_discount
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_account_move;
+
+FROM dwh.dim_account_move am
+left join dwh.dim_customer c
+    on am.partner_id = c.id
+left join dwh.dim_supplier s
+    on am.partner_id = s.id

@@ -1,10 +1,28 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_res_partner AS
 SELECT
-id as partner_id
---,partner_sk
---,name
+ id                    as partner_id 
+,name                  as partner_name     
+,phone                 as partner_phone     
+,mobile                as partner_mobile     
+,email                 as partner_email     
+,email_normalized      as partner_email_normalized                 
+,street                as partner_street     
+,street2               as partner_street2         
+,street_number         as partner_street_number             
+,zip                   as partner_zip     
+,city                  as partner_city     
+,state_id              as partner_state_id         
+,street_name           as partner_street_name             
+,vat                   as partner_vat     
+,website               as partner_website         
+,comment               as partner_comment         
+,active                as partner_active     
+,function              as partner_function         
+,type                  as partner_type     
+,create_date::date     as partner_create_date
+--,street_number2
+--,date_localization
 --,company_id
---,create_date
 --,display_name
 --,date
 --,title
@@ -13,25 +31,11 @@ id as partner_id
 --,lang
 --,tz
 --,user_id
---,vat
---,website
---,comment
 --,credit_limit
---,active
 --,employee
---,function
---,type
---,street
---,street2
---,zip
---,city
---,state_id
 --,country_id
 --,partner_latitude
 --,partner_longitude
---,email
---,phone
---,mobile
 --,is_company
 --,industry_id
 --,color
@@ -43,7 +47,6 @@ id as partner_id
 --,write_uid
 --,write_date
 --,message_main_attachment_id
---,email_normalized
 --,message_bounce
 --,signup_token
 --,signup_type
@@ -62,10 +65,6 @@ id as partner_id
 --,picking_warn_msg
 --,delivery_instructions
 --,style
---,street_name
---,street_number
---,street_number2
---,date_localization
 --,calendar_last_notif_ack
 --,purchase_warn
 --,purchase_warn_msg

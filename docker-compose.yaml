@@ -77,35 +77,38 @@ services:
       - airflow-init
 
   airflow-log-cleaner:
-    image: alpine
+    image: alpine:latest
     container_name: airflow-log-cleaner
     volumes:
-      - ./airflow/logs:/opt/airflow/logs
+      - ${PWD}/airflow/logs:/opt/airflow/logs
     command: >
-      sh -c "while true; do
-        find /opt/airflow/logs -type f -mmin +10 -delete
-        sleep 600;
-      done"
+      sh -c "apk add --no-cache coreutils findutils bash && 
+             while true; do
+               echo 'Cleaning old logs at' $(date);
+               find /opt/airflow/logs -type f -mmin +10 -print -delete;
+               find /opt/airflow/logs -type d -empty -delete;
+               sleep 60;
+             done"
     restart: unless-stopped
     networks:
       - local_net
 
-  metabase:
-    image: metabase/metabase:v0.56.7
-    container_name: metabase
-    environment:
-      - TZ=${TZ}    
-    restart: always
-    env_file: .env
-#    volumes:
-#      - ./metabase_data:/metabase-data #we are using Postgres for Metabase storage,Dashboards,saved questions,Users,permissions w config
-    ports:
-      - "3003:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - local_net
+#  metabase:
+#    image: metabase/metabase:v0.56.7
+#    container_name: metabase
+#    environment:
+#      - TZ=${TZ}    
+#    restart: always
+#    env_file: .env
+##    volumes:
+##      - ./metabase_data:/metabase-data #we are using Postgres for Metabase storage,Dashboards,saved questions,Users,permissions w config
+#    ports:
+#      - "3003:3000"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    networks:
+#      - local_net
 
 volumes:
   postgres_data:

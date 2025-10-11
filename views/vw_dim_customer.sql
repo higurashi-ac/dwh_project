@@ -1,19 +1,19 @@
 CREATE OR REPLACE VIEW dwh.vw_dim_customer AS
 SELECT
-id as customer_id
-,name as customer_name
-,phone
-,mobile
-,email
-,email_normalized
-,comment
-,street
-,street_name
-,street_number
-,zip
-,city
-,places
-,create_date::date as create_date
+id                  as customer_id
+,"name"             as customer_name
+,phone              as customer_phone
+,mobile             as customer_mobile
+,email              as customer_email
+,email_normalized   as customer_email_normalized
+,comment            as customer_comment
+,street             as customer_street
+,street_name        as customer_street_name
+,street_number      as customer_street_number
+,zip                as customer_zip
+,city               as customer_city
+,places             as customer_places
+,create_date::date  as customer_create_date
 --,active
 --,function
 --,type
