@@ -1,9 +1,9 @@
 CREATE OR REPLACE VIEW dwh.v_fact_sales AS
 
-select  order_date      as fs_order_date
-,       order_id        as fs_order_id
-,       order_line_id   as fs_order_line_id
-,       customer_id     as fs_customer_id
+select  order_date      as date_id
+,       order_id        as so_id
+,       order_line_id   as so_line_id
+,       customer_id     as customer_id
 --,       product_id              as sales_product_id
 
 -------- derived measures: sale_order_line --------
