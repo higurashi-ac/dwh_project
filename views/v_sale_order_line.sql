@@ -1,10 +1,10 @@
 CREATE OR REPLACE VIEW dwh.v_sale_order_line AS
 SELECT
---,sale_order_line_sk
-order_id                        as so_id
+sl.id                           as so_line_id
+,order_id                       as so_id
+,so.name                        as so_reference
 ,concat(so.name,'-',row_number() over(partition by sl.order_id order by sl.id) )
-                                as so_line_key
-,sl.id                          as so_line_id                                
+                                as so_line_item
 
 ,sl.name                        as so_line_name                                
 ,sl.order_partner_id            as customer_id                                 
@@ -31,6 +31,10 @@ order_id                        as so_id
 ,sl.salesman_id                 as so_line_salesman_id                                 
 ,sl.company_id                  as so_line_company_id                              
 
+from dwh.dim_sale_order_line sl
+inner join dwh.dim_sale_order so on so.id=order_id
+order by so_id desc, so_line_id;
+
 --,currency_id
 --,is_expense
 --,is_downpayment
@@ -55,6 +59,3 @@ order_id                        as so_id
 --,hide_net_price
 --,etl_loaded_at
 --,etl_batch_id
-from dwh.dim_sale_order_line sl
-inner join dwh.dim_sale_order so on so.id=order_id
-order by so_id desc, so_line_id;

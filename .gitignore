@@ -10,7 +10,9 @@ __pycache__/
 postgres_data/
 metabase_data/
 utils/*.sql
+utils/generate_erd.py
 !utils/init.sql
+!utils/generate_erd.sql
 /schemas_generate/*
 !/schemas_generate/bootstrap
 #views/
@@ -18,7 +20,8 @@ utils/*.sql
 # Logs
 logs/
 airflow/logs/*
-airflow/bootstrap/
+airflow/bootstrap/init_connections.sh
+!airflow/bootstrap/wait_for_postgres.sh
 *.log
 
 # Env files

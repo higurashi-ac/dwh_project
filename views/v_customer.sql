@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_customer AS
+CREATE OR REPLACE VIEW dwh.v_customer AS
 SELECT
 id                  as customer_id
 ,"name"             as customer_name

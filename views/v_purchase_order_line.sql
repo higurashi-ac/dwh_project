@@ -1,7 +1,7 @@
 CREATE OR REPLACE VIEW dwh.v_purchase_order_line AS
 SELECT
-order_id                as po_id
-,id                     as po_line_id
+id                      as po_line_id
+,order_id               as po_id
 ,concat('PO-', order_id,'-',row_number() over(partition by order_id order by id) ) as po_line_key
 ,"name"                 as po_line_desc
 ,"sequence"

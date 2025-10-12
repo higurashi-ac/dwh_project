@@ -25,9 +25,12 @@ java -jar "$SCHEMASPY_JAR" \
     -host postgres \
     -port 5432 \
     -db "${POSTGRES_DB}" \
-    -s dwh \
+    -s erd \
     -u "${POSTGRES_USER}" \
     -p "${POSTGRES_PASSWORD}" \
     -dp "$DRIVER_FILE" \
     -o /output \
     -debug
+    
+#--no-orphans \
+#--no-implied \
