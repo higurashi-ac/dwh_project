@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_purchase_order_line AS
+CREATE OR REPLACE VIEW dwh.v_purchase_order_line AS
 SELECT
 order_id                as po_id
 ,id                     as po_line_id

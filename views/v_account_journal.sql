@@ -1,7 +1,6 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_account_journal AS
+CREATE OR REPLACE VIEW dwh.v_account_journal AS
 SELECT
-account_journal_sk
---,account_journal_id
+id as "account_journal_id"
 --,message_main_attachment_id
 --,name
 --,code

@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_payment_justify AS
+CREATE OR REPLACE VIEW dwh.v_payment_justify AS
 SELECT
     id as payment_justify_id
 ,   date_paiement

@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_planning_slot AS
+CREATE OR REPLACE VIEW dwh.v_planning_slot AS
 SELECT
 id                       as planning_id
 ,coalesce(parent_id, id) as parent_id
@@ -8,8 +8,8 @@ id                       as planning_id
 ,name_seq                as planning_ref_intervention
 ,type_int                as type_intervention
 ,motif                   as planning_motif 
-,"Rapport"               as planning_rapport
 ,"Remarque"              as planning_remarque
+,"Rapport"               as planning_rapport
 ,"state"                 as planning_state
 ,employee_id
 ,partner_id              as customer_id

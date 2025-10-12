@@ -1,15 +1,15 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_hr_employee AS
+CREATE OR REPLACE VIEW dwh.v_employee AS
 SELECT
-    id as employee_id
-,   "name" as employee_name
-,   job_id
-,   job_title
-,   company_id
-,   address_id
-,   work_phone
-,   mobile_phone
-,   work_email
-,   work_location
+    id              as employee_id
+,   "name"          as employee_name
+,   job_id          as employee_job_id
+,   job_title       as employee_job_title
+,   company_id      as employee_company_id
+,   address_id      as employee_address_id
+,   work_phone      as employee_work_phone
+,   mobile_phone    as employee_mobile_phone
+,   work_email      as employee_work_email
+,   work_location   as employee_work_location
 --,user_id
 --,active
 --,address_home_id

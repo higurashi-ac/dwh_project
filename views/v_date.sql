@@ -1,6 +1,6 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_date AS
+CREATE OR REPLACE VIEW dwh.v_date AS
 SELECT
-    full_date
+    date_id
 ,   year
 ,   month
 ,   day

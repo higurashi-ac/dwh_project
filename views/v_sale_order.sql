@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_sale_order AS
+CREATE OR REPLACE VIEW dwh.v_sale_order AS
 SELECT
 id                          as so_id
 ,"name"                     as so_name

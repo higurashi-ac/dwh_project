@@ -1,6 +1,6 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_account_move AS
+CREATE OR REPLACE VIEW dwh.v_account_move AS
 SELECT
-am.id
+am.id as "account_move_id"
 ,am."date"
 ,am.invoice_date
 ,am.invoice_date_due

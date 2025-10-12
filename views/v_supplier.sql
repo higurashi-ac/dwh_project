@@ -1,26 +1,25 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_customer AS
+CREATE OR REPLACE VIEW dwh.v_supplier AS
 SELECT
-id                  as customer_id
-,"name"             as customer_name
-,phone              as customer_phone
-,mobile             as customer_mobile
-,email              as customer_email
-,email_normalized   as customer_email_normalized
-,comment            as customer_comment
-,street             as customer_street
-,street_name        as customer_street_name
-,street_number      as customer_street_number
-,zip                as customer_zip
-,city               as customer_city
-,places             as customer_places
-,create_date::date  as customer_create_date
---,active
---,function
---,type
---,street2
---,state_id
---,vat
---,website
+id                      as supplier_id
+,"name"                 as supplier_name
+,phone                  as supplier_phone
+,mobile                 as supplier_mobile
+,email                  as supplier_email
+,email_normalized       as supplier_email_normalized
+,street                 as supplier_street
+,street2                as supplier_street2
+,street_number          as supplier_street_number
+,zip                    as supplier_zip
+,city                   as supplier_city
+,state_id               as supplier_state_id
+,street_name            as supplier_street_name
+,vat                    as supplier_vat
+,website                as supplier_website
+,comment                as supplier_comment
+,active                 as supplier_active
+,"function"             as supplier_function
+,"type"                 as supplier_type
+,create_date::date      as supplier_create_date
 --,street_number2
 --,date_localization
 --,company_id
@@ -87,4 +86,4 @@ id                  as customer_id
 --,partner_delivery
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_customer;
+FROM dwh.dim_supplier;

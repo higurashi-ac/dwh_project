@@ -30,5 +30,4 @@ java -jar "$SCHEMASPY_JAR" \
     -p "${POSTGRES_PASSWORD}" \
     -dp "$DRIVER_FILE" \
     -o /output \
-    -e "(vw_*)" \
     -debug

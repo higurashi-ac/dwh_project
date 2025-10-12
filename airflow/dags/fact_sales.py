@@ -27,11 +27,7 @@ CREATE TABLE IF NOT EXISTS dwh.fact_sales (
     price_total NUMERIC,
     price_reduce NUMERIC,
     etl_loaded_at TIMESTAMP DEFAULT now(),
-    etl_batch_id VARCHAR,
-    PRIMARY KEY (order_id, order_line_id),
-    FOREIGN KEY (order_id) REFERENCES dwh.dim_sale_order(id) ON DELETE CASCADE,
-    FOREIGN KEY (order_line_id) REFERENCES dwh.dim_sale_order_line(id) ON DELETE CASCADE,
-    FOREIGN KEY (customer_id) REFERENCES dwh.dim_customer(id) ON DELETE SET NULL
+    etl_batch_id VARCHAR
 );
 
 INSERT INTO dwh.fact_sales (
@@ -50,16 +46,16 @@ INSERT INTO dwh.fact_sales (
     etl_loaded_at,
     etl_batch_id
 )
-WITH base AS (
+with base as (
     SELECT
-        s.date_order        AS order_date,
-        s.id                AS order_id,
-        sl.id AS order_line_id,
+        s.date_order        as order_date,
+        s.id                as order_id,
+        sl.id               as order_line_id,
         concat(
             s.id, '-',
-            row_number() OVER (PARTITION BY s.id ORDER BY sl.id, sl.create_date)
-        )                   AS order_seq,
-        c.id                AS customer_id,
+            row_number() over (partition by s.id order by sl.id, sl.create_date)
+        )                   as order_seq,
+        c.id                as customer_id,
         sl.price_unit,
         sl.product_uom_qty,
         sl.discount,
@@ -67,35 +63,23 @@ WITH base AS (
         sl.price_tax,
         sl.price_total,
         sl.price_reduce,
-        now()               AS etl_loaded_at,
-        gen_random_uuid()   AS etl_batch_id
+        now()               as etl_loaded_at,
+        gen_random_uuid()   as etl_batch_id
     
     FROM dwh.dim_sale_order_line sl
     JOIN dwh.dim_sale_order s       ON sl.order_id = s.id
     JOIN dwh.dim_customer c         ON s.partner_id = c.id
     
-    --JOIN dwh.dim_planning_slot pl   ON s.planning_id = pl.id
-      -- ignore this as planning_id are all NULLS in sale_order, maybe we keep navigating in view layer from vw_fact_sales.customer_id to vw_dim_planning_slot.partner_id
+      -- JOIN dwh.dim_planning_slot pl   ON s.planning_id = pl.id
+      -- ignore this since planning_id are all NULLS in sale_order,
+      -- we might navigate the model using the view layer 
+      -- from vw_fact_sales.customer_id to vw_dim_planning_slot.partner_id or vis-versa
     
     --JOIN dwh.dim_product p          ON sl.product_id = p.id
 )
 SELECT *
 FROM base
-ON CONFLICT (order_id, order_line_id) DO UPDATE
-SET
-    order_date = EXCLUDED.order_date,
-    order_seq = EXCLUDED.order_seq,
-    customer_id = EXCLUDED.customer_id,
-    price_unit = EXCLUDED.price_unit,
-    product_uom_qty = EXCLUDED.product_uom_qty,
-    discount = EXCLUDED.discount,
-    price_subtotal = EXCLUDED.price_subtotal,
-    price_tax = EXCLUDED.price_tax,
-    price_total = EXCLUDED.price_total,
-    price_reduce = EXCLUDED.price_reduce,
-    etl_loaded_at = EXCLUDED.etl_loaded_at,
-    etl_batch_id = EXCLUDED.etl_batch_id
-    ;
+ORDER BY order_date DESC, order_id, order_line_id;
 """
 
 def build_fact_sales_sql(table_name):

@@ -1,25 +1,25 @@
-CREATE OR REPLACE VIEW dwh.vw_dim_supplier AS
+CREATE OR REPLACE VIEW dwh.v_partner AS
 SELECT
-id                      as supplier_id
-,"name"                 as supplier_name
-,phone                  as supplier_phone
-,mobile                 as supplier_mobile
-,email                  as supplier_email
-,email_normalized       as supplier_email_normalized
-,street                 as supplier_street
-,street2                as supplier_street2
-,street_number          as supplier_street_number
-,zip                    as supplier_zip
-,city                   as supplier_city
-,state_id               as supplier_state_id
-,street_name            as supplier_street_name
-,vat                    as supplier_vat
-,website                as supplier_website
-,comment                as supplier_comment
-,active                 as supplier_active
-,"function"             as supplier_function
-,"type"                 as supplier_type
-,create_date::date      as supplier_create_date
+ id                    as partner_id 
+,name                  as partner_name     
+,phone                 as partner_phone     
+,mobile                as partner_mobile     
+,email                 as partner_email     
+,email_normalized      as partner_email_normalized                 
+,street                as partner_street     
+,street2               as partner_street2         
+,street_number         as partner_street_number             
+,zip                   as partner_zip     
+,city                  as partner_city     
+,state_id              as partner_state_id         
+,street_name           as partner_street_name             
+,vat                   as partner_vat     
+,website               as partner_website         
+,comment               as partner_comment         
+,active                as partner_active     
+,function              as partner_function         
+,type                  as partner_type     
+,create_date::date     as partner_create_date
 --,street_number2
 --,date_localization
 --,company_id
@@ -86,4 +86,4 @@ id                      as supplier_id
 --,partner_delivery
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_supplier;
+FROM dwh.dim_res_partner;
