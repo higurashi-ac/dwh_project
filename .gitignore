@@ -20,7 +20,8 @@ utils/generate_erd.py
 # Logs
 logs/
 airflow/logs/*
-airflow/bootstrap/
+airflow/bootstrap/init_connections.sh
+!airflow/bootstrap/wait_for_postgres.sh
 *.log
 
 # Env files
