@@ -1,6 +1,6 @@
 CREATE OR REPLACE VIEW dwh.v_date AS
 SELECT
-    date_id
+    full_date as date_id
 ,   year
 ,   month
 ,   day
