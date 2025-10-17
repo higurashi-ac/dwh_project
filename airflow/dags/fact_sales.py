@@ -13,6 +13,22 @@ default_args = {
 }
 
 sql_fact_sales = """
+CREATE TABLE IF NOT EXISTS dwh.fact_sales (
+    order_date DATE,
+    order_id INT,
+    order_line_id INT,
+    order_seq VARCHAR,
+    customer_id INT,
+    price_unit NUMERIC,
+    product_uom_qty NUMERIC,
+    discount NUMERIC,
+    price_subtotal NUMERIC,
+    price_tax NUMERIC,
+    price_total NUMERIC,
+    price_reduce NUMERIC,
+    etl_loaded_at TIMESTAMP DEFAULT now(),
+    etl_batch_id VARCHAR
+);
 WITH base AS (
     SELECT
         s.date_order        AS order_date,

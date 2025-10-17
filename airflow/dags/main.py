@@ -95,11 +95,11 @@ with DAG(
         wait_for_completion=True
     )
 
-    #fact_purchases = TriggerDagRunOperator(
-    #    task_id="run_fact_purchases",
-    #    trigger_dag_id="fact_purchases",
-    #    wait_for_completion=True
-    #)
+    fact_purchases = TriggerDagRunOperator(
+        task_id="run_fact_purchases",
+        trigger_dag_id="fact_purchases",
+        wait_for_completion=True
+    )
 
 
     # Orchestration order
@@ -116,4 +116,4 @@ with DAG(
 
     # Facts dependencies
     [dim_customer, dim_sale_order, dim_sale_order_line] >> fact_sales
-    #[dim_supplier, dim_purchase_order, dim_purchase_order_line] >> fact_purchases
+    [dim_supplier, dim_purchase_order, dim_purchase_order_line] >> fact_purchases
