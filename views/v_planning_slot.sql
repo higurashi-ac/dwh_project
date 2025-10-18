@@ -16,10 +16,10 @@ id                       as planning_id
 ,ville_client
 ,region_client
 --,employees_ids
-,suivi
-,allocated_hours
-,allocated_percentage
-,working_days_count
+--,suivi
+--,allocated_hours
+--,allocated_percentage
+--,working_days_count
 --,user_id
 --,company_id
 --,rapport_supp
@@ -44,5 +44,3 @@ id                       as planning_id
 --,amount_residual
 --,etl_loaded_at
 --,etl_batch_id
-FROM dwh.dim_planning_slot
-order by parent_id desc, create_date_ts;
