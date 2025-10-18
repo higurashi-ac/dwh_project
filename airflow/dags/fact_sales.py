@@ -19,6 +19,13 @@ CREATE TABLE IF NOT EXISTS dwh.fact_sales (
     order_line_id INT,
     order_seq VARCHAR,
     customer_id INT,
+    
+    product_id INT,                      
+    product_name VARCHAR,                
+    product_price NUMERIC,               
+    product_catg_id INT,                 
+    product_barcode VARCHAR,
+
     price_unit NUMERIC,
     product_uom_qty NUMERIC,
     discount NUMERIC,
@@ -39,6 +46,12 @@ WITH base AS (
             row_number() OVER (PARTITION BY s.id ORDER BY sl.id, sl.create_date)
         )                   AS order_seq,
         c.id                AS customer_id,
+        pt.id                AS product_id,
+        pt.name              AS product_name,
+        pt.list_price       AS product_price,
+        pt.categ_id          AS product_catg_id,
+        p.barcode            AS product_barcode,
+
         sl.price_unit,
         sl.product_uom_qty,
         sl.discount,
@@ -51,7 +64,10 @@ WITH base AS (
     
     FROM dwh.dim_sale_order_line sl
     JOIN dwh.dim_sale_order s ON sl.order_id = s.id
+    JOIN dwh.dim_product_product p ON sl.product_id = p.id 
+    JOIN dwh.dim_product_template pt ON p.product_tmpl_id = pt.id 
     JOIN dwh.dim_customer c   ON s.partner_id = c.id
+    
 )
 
 MERGE INTO dwh.fact_sales AS target
@@ -63,6 +79,13 @@ WHEN MATCHED THEN
         order_date     = source.order_date,
         order_seq      = source.order_seq,
         customer_id    = source.customer_id,
+
+        product_id       = source.product_id,      
+        product_name     = source.product_name,     
+        product_price    = source.product_price,    
+        product_catg_id  = source.product_catg_id,  
+        product_barcode  = source.product_barcode,  
+
         price_unit     = source.price_unit,
         product_uom_qty= source.product_uom_qty,
         discount       = source.discount,
@@ -79,6 +102,13 @@ WHEN NOT MATCHED THEN
         order_line_id,
         order_seq,
         customer_id,
+
+        product_id,        
+        product_name,      
+        product_price,     
+        product_catg_id,   
+        product_barcode, 
+
         price_unit,
         product_uom_qty,
         discount,
@@ -95,6 +125,13 @@ WHEN NOT MATCHED THEN
         source.order_line_id,
         source.order_seq,
         source.customer_id,
+
+        source.product_id,        
+        source.product_name,      
+        source.product_price,     
+        source.product_catg_id,   
+        source.product_barcode,   
+
         source.price_unit,
         source.product_uom_qty,
         source.discount,

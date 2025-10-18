@@ -19,6 +19,13 @@ CREATE TABLE IF NOT EXISTS dwh.fact_purchases (
     order_line_id INT,
     order_seq VARCHAR,
     supplier_id INT,
+
+    product_id INT,                      
+    product_name VARCHAR,                
+    product_price NUMERIC,               
+    product_catg_id INT,                 
+    product_barcode VARCHAR,
+
     price_unit NUMERIC,
     product_uom_qty NUMERIC,
     discount NUMERIC,
@@ -30,14 +37,21 @@ CREATE TABLE IF NOT EXISTS dwh.fact_purchases (
 );
 WITH base AS (
     SELECT
-        p.date_order        AS order_date,
-        p.id                AS order_id,
+        po.date_order        AS order_date,
+        po.id                AS order_id,
         pl.id               AS order_line_id,
         concat(
-            p.id, '-',
-            row_number() OVER (PARTITION BY p.id ORDER BY pl.id, pl.create_date)
+            po.id, '-',
+            row_number() OVER (PARTITION BY po.id ORDER BY pl.id, pl.create_date)
         )                   AS order_seq,
         s.id                AS supplier_id,
+        
+        pt.id                AS product_id,
+        pt.name              AS product_name,
+        pt.list_price       AS product_price,
+        pt.categ_id          AS product_catg_id,
+        p.barcode            AS product_barcode,
+
         pl.price_unit,
         pl.product_uom_qty,
         pl.discount,
@@ -48,8 +62,10 @@ WITH base AS (
         gen_random_uuid()   AS etl_batch_id
     
     FROM dwh.dim_purchase_order_line pl
-    JOIN dwh.dim_purchase_order p ON pl.order_id = p.id
-    JOIN dwh.dim_supplier s   ON p.partner_id = s.id
+    JOIN dwh.dim_purchase_order po ON pl.order_id = po.id
+    JOIN dwh.dim_product_product p ON pl.product_id = p.id 
+    JOIN dwh.dim_product_template pt ON p.product_tmpl_id = pt.id
+    JOIN dwh.dim_supplier s   ON po.partner_id = s.id
 )
 
 MERGE INTO dwh.fact_purchases AS target
@@ -61,6 +77,13 @@ WHEN MATCHED THEN
         order_date     = source.order_date,
         order_seq      = source.order_seq,
         supplier_id    = source.supplier_id,
+        
+        product_id       = source.product_id,      
+        product_name     = source.product_name,     
+        product_price    = source.product_price,    
+        product_catg_id  = source.product_catg_id,  
+        product_barcode  = source.product_barcode, 
+
         price_unit     = source.price_unit,
         product_uom_qty= source.product_uom_qty,
         discount       = source.discount,
@@ -76,6 +99,13 @@ WHEN NOT MATCHED THEN
         order_line_id,
         order_seq,
         supplier_id,
+
+        product_id,        
+        product_name,      
+        product_price,     
+        product_catg_id,   
+        product_barcode, 
+
         price_unit,
         product_uom_qty,
         discount,
@@ -91,6 +121,13 @@ WHEN NOT MATCHED THEN
         source.order_line_id,
         source.order_seq,
         source.supplier_id,
+
+        source.product_id,        
+        source.product_name,      
+        source.product_price,     
+        source.product_catg_id,   
+        source.product_barcode,
+        
         source.price_unit,
         source.product_uom_qty,
         source.discount,

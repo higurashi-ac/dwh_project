@@ -49,6 +49,8 @@ with DAG(
         ,"dim_account_move"
         ,"dim_account_journal"
         ,"dim_payment_justify"
+        ,"dim_product_product"
+        ,"dim_product_template"
     ]
 
     # Create Trigger tasks dynamically for dimension DAGs
@@ -73,6 +75,8 @@ with DAG(
     dim_account_move        = dim_tasks["dim_account_move"]
     dim_account_journal     = dim_tasks["dim_account_journal"]
     dim_payment_justify     = dim_tasks["dim_payment_justify"]
+    dim_product_product     = dim_tasks["dim_product_product"]
+    dim_product_template     = dim_tasks["dim_product_template"]
 
     
     # Dependent dimension DAGs
@@ -115,5 +119,5 @@ with DAG(
     dim_purchase_order >> dim_supplier
 
     # Facts dependencies
-    [dim_customer, dim_sale_order, dim_sale_order_line] >> fact_sales
-    [dim_supplier, dim_purchase_order, dim_purchase_order_line] >> fact_purchases
+    [dim_customer, dim_sale_order, dim_sale_order_line , dim_product_product,dim_product_template] >> fact_sales
+    [dim_supplier, dim_purchase_order, dim_purchase_order_line ,dim_product_product,dim_product_template] >> fact_purchases

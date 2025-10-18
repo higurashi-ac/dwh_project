@@ -4,7 +4,11 @@ select  order_date      as date_id
 ,       order_id        as so_id
 ,       order_line_id   as so_line_id
 ,       customer_id     as customer_id
---,       product_id              as sales_product_id
+,       product_id      as sales_product_id
+,       product_name    as product_name 
+,       product_price   as product_price
+,       product_barcode as product_barcode
+
 
 -------- derived measures: sale_order_line --------
 -------- see fact_sales.py dag for more --------

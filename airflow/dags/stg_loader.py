@@ -19,6 +19,8 @@ TABLES = [
     {"name": "account_move"        , "pk": "account_move_id"        , "inc_col": "write_date"},
     {"name": "account_journal"     , "pk": "account_journal_id"     , "inc_col": "write_date"},
     {"name": "payment_justify"     , "pk": "payment_justify_id"     , "inc_col": "write_date"},
+    {"name": "product_product"     , "pk": "product_product_id"     , "inc_col": "write_date"},
+    {"name": "product_template"    , "pk": "product_template_id"    , "inc_col": "write_date"},
 ]
 
 # --- Helper function to create staging tables dynamically ---
