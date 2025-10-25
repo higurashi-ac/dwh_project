@@ -81,6 +81,16 @@ def build_dim_sql(table_name):
     );
     """
 
+    delete_sql = f"""
+    delete from dwh.dim_{table_name} d
+    using (
+        select distinct so_id
+        from stg.{table_name}
+        where etl_batch_id = (select max(etl_batch_id) from stg.{table_name})
+    ) s
+    where d.so_id = s.so_id;
+    """
+
     upsert_sql = f"""
     INSERT INTO dwh.dim_{table_name} (
         {', '.join(insert_cols)}
@@ -98,7 +108,7 @@ def build_dim_sql(table_name):
    
     ;
     """
-    full_sql = create_sql + "\n" + upsert_sql
+    full_sql = create_sql + "\n" + delete_sql + "\n" + upsert_sql
     logger = logging.getLogger(__name__)
     return full_sql
 
