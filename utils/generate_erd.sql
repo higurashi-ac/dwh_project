@@ -23,6 +23,7 @@ CREATE TABLE erd.dim_supplier AS SELECT * FROM dwh.v_supplier LIMIT 0;
 CREATE TABLE erd.dim_customer AS SELECT * FROM dwh.v_customer LIMIT 0;
 CREATE TABLE erd.dim_product_product AS SELECT * FROM dwh.v_product_product LIMIT 0;
 CREATE TABLE erd.dim_product_template AS SELECT * FROM dwh.v_product_template LIMIT 0;
+CREATE TABLE erd.dim_intervention AS SELECT * FROM dwh.v_intervention LIMIT 0;
 
 -- ==========================================================
 -- STEP 2: ADD PRIMARY KEYS (FIRST COLUMN OF EACH NON-FACT VIEW)
@@ -34,6 +35,8 @@ ALTER TABLE erd.dim_employee ADD PRIMARY KEY (employee_id);
 ALTER TABLE erd.dim_partner ADD PRIMARY KEY (partner_id);
 ALTER TABLE erd.dim_payment_justify ADD PRIMARY KEY (payment_justify_id);
 ALTER TABLE erd.dim_planning_slot ADD PRIMARY KEY (planning_id);
+
+ALTER TABLE erd.dim_intervention ADD PRIMARY KEY (customer_id);
 
 ALTER TABLE erd.dim_supplier ADD PRIMARY KEY (supplier_id);
 ALTER TABLE erd.dim_customer ADD PRIMARY KEY (customer_id);
@@ -69,3 +72,5 @@ ALTER TABLE erd.fact_purchases ADD CONSTRAINT fk_fact_purchases_v_supplier      
 ALTER TABLE erd.fact_purchases ADD CONSTRAINT fk_fact_purchases_v_date             FOREIGN KEY (date_id)        REFERENCES erd.dim_date(date_id);
 ALTER TABLE erd.fact_purchases ADD CONSTRAINT fk_fact_purchases_v_purchase_order       FOREIGN KEY (po_id)          REFERENCES erd.dim_purchase_order (po_id);
 ALTER TABLE erd.fact_purchases ADD CONSTRAINT fk_fact_purchases_v_purchase_order_line  FOREIGN KEY (po_line_id)     REFERENCES erd.dim_purchase_order_line(po_line_id);
+
+ALTER TABLE erd.dim_intervention ADD CONSTRAINT fk_dim_intervention_customer        FOREIGN KEY (customer_id) REFERENCES erd.dim_customer(customer_id);

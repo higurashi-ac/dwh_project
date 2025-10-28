@@ -83,12 +83,10 @@ def build_dim_sql(table_name):
 
     delete_sql = f"""
     delete from dwh.dim_{table_name} d
-    using (
-        select distinct so_id
-        from stg.{table_name}
-        where etl_batch_id = (select max(etl_batch_id) from stg.{table_name})
-    ) s
-    where d.so_id = s.so_id;
+    where order_id in (select distinct order_id
+        from stg.sale_order_line
+        where write_date >= NOW() - INTERVAL '30 minutes' 
+        );
     """
 
     upsert_sql = f"""
@@ -99,8 +97,9 @@ def build_dim_sql(table_name):
     (SELECT
         {', '.join(insert_select)}
         ,row_number() over(partition by id order by write_date desc) as rn 
+        ,CASE WHEN write_date = max(write_date) OVER(PARTITION BY order_id) THEN 1 ELSE 0 end as maxdate
     FROM stg.{table_name} s)
-    ,final as (select {', '.join(insert_cols)} from base where rn =1) 
+    ,final as (select {', '.join(insert_cols)} from base where rn =1 and maxdate = 1) 
         
     select * from final 
     ON CONFLICT (id) DO UPDATE

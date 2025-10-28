@@ -71,7 +71,7 @@ WITH base AS (
 MERGE INTO dwh.fact_purchases AS target
 USING base AS source
 ON target.order_id = source.order_id
-   AND target.order_line_id = source.order_line_id
+--   AND target.order_line_id = source.order_line_id
 WHEN MATCHED THEN
     UPDATE SET
         order_date     = source.order_date,

@@ -1,4 +1,5 @@
-with planning as (
+CREATE OR REPLACE VIEW dwh.v_intervention AS
+with planning as ( --planning : cte  table temporaire
   select
     customer_id
     ,row_number() over (partition by ps.customer_id order by create_date_ts) as cust_seq
@@ -7,7 +8,7 @@ with planning as (
     ,planning_ref_intervention
     ,type_intervention
     ,planning_motif
-    ,regexp_replace(planning_remarque, '<\/?p>', '', 'gi') as planning_remarque
+    ,regexp_replace(planning_remarque, '<\/?p>', '', 'gi') as planning_remarque 
     ,regexp_replace(planning_rapport, '<\/?p>', '', 'gi') as planning_rapport
     ,e.employee_name
   from dwh.v_planning_slot ps
@@ -17,7 +18,7 @@ with planning as (
 select
   customer_id,
   max(cust_seq) as "# interv",
-  min(create_date_ts) as ""
+  min(create_date_ts) as "first_intervention",
   json_agg(
     json_build_object(
       'N°intervention  ' , cust_seq

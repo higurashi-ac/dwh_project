@@ -44,3 +44,4 @@ id                       as planning_id
 --,amount_residual
 --,etl_loaded_at
 --,etl_batch_id
+FROM dwh.dim_planning_slot;
